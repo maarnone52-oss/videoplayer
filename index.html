@@ -15,7 +15,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,s
 header{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 12px}
 h1{font-size:18px;margin:0;flex:1}
 .btn{display:inline-block;padding:9px 14px;border-radius:10px;background:var(--acc);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
-video{width:100%;max-height:36vh;background:#000;display:block}
+video,#ph{width:100%;height:100%;object-fit:contain;background:#000;display:block}
 #bar{display:flex;align-items:center;gap:10px;padding:6px 12px;font-size:14px;color:var(--mut)}
 #now{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 #prog{height:16px;margin:8px 12px 0;background:var(--line);border-radius:8px;overflow:hidden;touch-action:none;cursor:pointer}
@@ -24,7 +24,7 @@ video{width:100%;max-height:36vh;background:#000;display:block}
 [hidden]{display:none!important}
 #ctl{display:flex;gap:8px;padding:0 12px 8px}
 #pp{flex:1;height:44px;border:0;border-radius:10px;background:var(--acc);color:#fff;font-size:17px;font-weight:700;font-family:inherit}
-#cap,#zm,#zp{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit}
+#cap,#sz,#zm,#zp{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit}
 #zm,#zp{padding:0 14px;font-size:22px;line-height:1}
 #prj,#pedit{display:flex;gap:6px;padding:0 12px 8px;align-items:center}
 #prj select,#pedit input{flex:1;min-width:0;padding:7px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:15px}
@@ -35,8 +35,8 @@ video{width:100%;max-height:36vh;background:#000;display:block}
 #foot{position:relative;z-index:10;padding:10px 12px}
 #go{width:100%;height:68px;border:0;border-radius:16px;background:var(--acc);color:#fff;font-size:24px;font-weight:700}
 #go:disabled{opacity:.35}
-#stage{position:relative;background:#000}
-#ph{width:100%;height:36vh;object-fit:contain;background:#000;display:block}
+#stage{position:relative;background:#000;flex:none;overflow:hidden;width:calc(var(--sc,1)*100%);height:calc(var(--sc,1)*36vh);margin:0 auto}
+
 #wait{display:none;position:absolute;inset:0;background:#000}
 #wait.on{display:block}
 #nx{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;color:#444;font-size:15px;padding:0 20px}
@@ -53,7 +53,7 @@ button.btn{border:0;font-family:inherit}
 .tile.on{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
 .tile.drag{z-index:20;pointer-events:none;opacity:.92;box-shadow:0 10px 26px rgba(0,0,0,.5)}
 .tile.tgt{outline:3px dashed var(--acc);outline-offset:2px}
-.th{aspect-ratio:16/9;background:#2a2a2a center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px}
+.th{aspect-ratio:16/9;background:#2a2a2a center/contain no-repeat;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px}
 .nm{padding:6px 8px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .x{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:14px;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:15px}
 .hint{grid-column:1/-1;color:var(--mut);text-align:center;padding:30px 10px}
@@ -74,7 +74,7 @@ button.btn{border:0;font-family:inherit}
 <div id="stage"><video id="v" playsinline></video><img id="ph" alt="" hidden><div id="wait"><div id="nx"></div></div></div>
 <div id="prog" aria-label="Avanzamento"><div id="pf"></div></div>
 <div id="bar"><span id="now">Nessun video in riproduzione</span><span id="tm">0:00 / 0:00</span><button id="mu" type="button" aria-label="Audio">🔊</button></div>
-<div id="ctl"><button id="pp" type="button">Pausa</button><button id="cap" type="button">Anteprima</button><button id="zm" type="button" aria-label="Riduci le anteprime">−</button><button id="zp" type="button" aria-label="Ingrandisci le anteprime">+</button></div>
+<div id="ctl"><button id="pp" type="button">Pausa</button><button id="cap" type="button">Anteprima</button><button id="sz" type="button" aria-label="Dimensione schermo">100%</button><button id="zm" type="button" aria-label="Riduci le anteprime">−</button><button id="zp" type="button" aria-label="Ingrandisci le anteprime">+</button></div>
 <div id="list"></div>
 <div id="foot"><button id="go" type="button">Continua</button></div>
 
@@ -444,6 +444,11 @@ function doUndo(){
   saveOrder();updUndo();render();
 }
 und.addEventListener("click",doUndo);
+var sz=document.getElementById("sz"),sc=1;
+try{sc=localStorage.getItem("vpsz")==="80"?0.8:1;}catch(e){}
+function applySz(){document.getElementById("stage").style.setProperty("--sc",sc);sz.textContent=sc===1?"100%":"80%";}
+applySz();
+sz.addEventListener("click",function(){sc=sc===1?0.8:1;try{localStorage.setItem("vpsz",sc===1?"100":"80");}catch(e){}applySz();});
 updUndo();
 fillProj();openDB(loadAll);
 })();
