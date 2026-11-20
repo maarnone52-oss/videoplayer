@@ -16,11 +16,8 @@ input,select,textarea{-webkit-user-select:text!important;user-select:text!import
 html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none}
 body{margin:0;padding-top:var(--sat);padding-bottom:var(--sab);background:var(--bg);color:var(--fg);font:15px/1.3 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;box-sizing:border-box}
 header{position:relative;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px 4px;touch-action:none}
-header::before{content:"";position:fixed;left:0;right:0;top:0;height:calc(var(--sat) + 42px);background:color-mix(in srgb,var(--bg) 52%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);pointer-events:none;z-index:-1}
-header .btn{opacity:.78;transition:opacity .15s ease}
-header .btn:active{opacity:1}
 h1{font-size:16px;margin:0;flex:1;min-width:85px}
-.btn{display:inline-block;padding:6px 10px;border-radius:9px;background:var(--acc);color:#fff;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation}
+.btn{opacity:1!important;display:inline-block;padding:6px 10px;border-radius:9px;background:var(--acc);color:#fff;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation}
 video,#ph{width:100%;height:100%;object-fit:contain;background:#000;display:block;pointer-events:auto}
 #bar{display:flex;align-items:center;gap:8px;padding:3px 10px;font-size:13px;color:var(--mut);touch-action:none}
 #now{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -61,7 +58,7 @@ button.btn{border:0;font-family:inherit}
 .mv.l{left:6px}
 .mv.r{right:6px}
 .num{position:absolute;left:6px;top:2px;z-index:2;pointer-events:none;font-weight:800;line-height:1.1;font-size:clamp(16px,calc(var(--tw,130px)*.3),44px);color:#fff;text-shadow:0 0 5px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.95)}
-.btn:disabled{opacity:.4}
+.btn:disabled{opacity:.65!important;filter:saturate(.65)}
 #mu{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:2px 7px;font-size:16px;line-height:1.2;touch-action:manipulation}
 #mu.on{background:var(--acc);border-color:var(--acc)}
 
