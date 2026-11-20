@@ -67,10 +67,8 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 #stage{position:relative;background:#000;flex:none;overflow:hidden;width:68%;height:20.5vh;margin:8px auto 0;border-radius:10px;border:3px solid transparent;box-sizing:border-box;touch-action:none;transition:border-color .2s ease}
 #stage.playing{animation:playPulse 1.1s ease-in-out infinite}
 
-#wait{display:none;position:absolute;inset:0;background:rgba(0,0,0,.92);flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;text-align:center}
-#wait.on{display:flex}
-#nx{color:#e5e5e0;font-size:14px;padding:0 16px}
-#nxbtn{border:0;border-radius:10px;background:var(--acc);color:#fff;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;touch-action:manipulation}
+#wait{display:none;position:absolute;inset:0;background:#000}
+#wait.on{display:block}
 .mv{position:absolute;bottom:34px;width:min(34px,40%);height:30px;border-radius:15px;border:0;background:var(--acc);color:#fff;font-size:18px;touch-action:manipulation}
 .mv.l{left:6px}
 .mv.r{right:6px}
@@ -108,7 +106,7 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 <div id="prj"><select id="psel" aria-label="Progetto"></select><button id="pnew" type="button">Nuovo</button><button id="pren" type="button">Rinomina</button><button id="pdel" type="button">Elimina</button></div>
 <div id="pedit" hidden><input id="pname" maxlength="40" placeholder="Nome del progetto"><button id="pok" type="button">OK</button><button id="pno" type="button">Annulla</button></div>
 <div id="imp" hidden><div id="impt"></div><div id="impb"><div id="impf"></div></div></div>
-<div id="stage"><video id="v" playsinline></video><img id="ph" alt="" hidden><div id="wait"><div id="nx"></div><button id="nxbtn" type="button">Avvia prossimo ▶</button></div></div>
+<div id="stage"><video id="v" playsinline></video><img id="ph" alt="" hidden><div id="wait"></div></div>
 <div id="prog" aria-label="Avanzamento"><div id="pf"></div></div>
 <div id="bar"><span id="now">Nessun video in riproduzione</span><span id="tm">0:00 / 0:00</span><button id="mu" type="button" aria-label="Audio">🔊</button></div>
 <div id="ctl"><button id="pp" type="button">Pausa</button><button id="pdur" type="button" title="Durata foto">Foto: ∞</button><button id="cap" type="button">Anteprima</button><button id="delcur" type="button" aria-label="Elimina selezionato o trascina qui per eliminare" title="Elimina selezionato o trascina qui" disabled>🗑️</button></div>
@@ -140,7 +138,7 @@ document.addEventListener("touchend",function(e){
 },{passive:false});
 document.addEventListener("wheel",function(e){if(e.ctrlKey||e.metaKey)e.preventDefault();},{passive:false});
 
-var list=document.getElementById("list"),v=document.getElementById("v"),now=document.getElementById("now"),inp=document.getElementById("file"),prog=document.getElementById("prog"),pf=document.getElementById("pf"),tm=document.getElementById("tm"),go=document.getElementById("go"),wait=document.getElementById("wait"),ord=document.getElementById("ord"),cap=document.getElementById("cap"),pp=document.getElementById("pp"),ph=document.getElementById("ph"),ap=document.getElementById("ap"),nx=document.getElementById("nx"),nxbtn=document.getElementById("nxbtn"),pdur=document.getElementById("pdur"),delcur=document.getElementById("delcur"),stage=document.getElementById("stage");
+var list=document.getElementById("list"),v=document.getElementById("v"),now=document.getElementById("now"),inp=document.getElementById("file"),prog=document.getElementById("prog"),pf=document.getElementById("pf"),tm=document.getElementById("tm"),go=document.getElementById("go"),wait=document.getElementById("wait"),ord=document.getElementById("ord"),cap=document.getElementById("cap"),pp=document.getElementById("pp"),ph=document.getElementById("ph"),ap=document.getElementById("ap"),pdur=document.getElementById("pdur"),delcur=document.getElementById("delcur"),stage=document.getElementById("stage");
 var items=[],cur=-1,db=null,queue=[],busy=false,sorting=false,imp={t:0,d:0},projs=[],pid="p1";
 var photoDurs=[0,3,5,8],photoDurIdx=0,photoTimer=null,photoPaused=false,photoElapsed=0,photoStart=0;
 try{projs=JSON.parse(localStorage.getItem("vpprojects")||"[]");pid=localStorage.getItem("vpcur")||"p1";}catch(e){}
@@ -369,14 +367,8 @@ function updateGo(){
 function setWait(on){
   wait.classList.toggle("on",on);
   document.body.classList.toggle("waiting",on);
-  if(on){
-    setStagePlaying(false);
-    var hasNext=cur+1<items.length;
-    nx.textContent=hasNext?"Prossimo: "+items[cur+1].name:"Fine dell’elenco";
-    nxbtn.hidden=!hasNext;
-  }
+  if(on)setStagePlaying(false);
 }
-nxbtn.addEventListener("click",function(){play(cur+1);});
 v.addEventListener("ended",function(){setStagePlaying(false);setWait(true);});
 v.addEventListener("timeupdate",function(){
   pf.style.width=(v.duration?v.currentTime/v.duration*100:0)+"%";
