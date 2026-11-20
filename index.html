@@ -139,11 +139,31 @@ document.addEventListener("touchmove",function(e){
 },{passive:false});
 var lastTouchEnd=0;
 document.addEventListener("touchend",function(e){
+
+  
   var nowT=Date.now();
   if(nowT-lastTouchEnd<=300&&!e.target.closest("input,select,textarea")){e.preventDefault();}
   lastTouchEnd=nowT;
 },{passive:false});
-document.addEventListener("wheel",function(e){if(e.ctrlKey||e.metaKey)e.preventDefault();},{passive:false});
+
+  
+  
+  
+
+
+
+
+
+
+  
+
+
+
+  
+  
+  
+  
+  document.addEventListener("wheel",function(e){if(e.ctrlKey||e.metaKey)e.preventDefault();},{passive:false});
 
 var list=document.getElementById("list"),v=document.getElementById("v"),now=document.getElementById("now"),inp=document.getElementById("file"),prog=document.getElementById("prog"),pf=document.getElementById("pf"),tm=document.getElementById("tm"),go=document.getElementById("go"),wait=document.getElementById("wait"),cap=document.getElementById("cap"),pp=document.getElementById("pp"),ph=document.getElementById("ph"),ap=document.getElementById("ap"),pdur=document.getElementById("pdur"),cont=document.getElementById("cont"),delcur=document.getElementById("delcur"),stage=document.getElementById("stage");
 var items=[],cur=-1,db=null,queue=[],busy=false,pendingOrder=false,imp={t:0,d:0},projs=[],pid="p1";
