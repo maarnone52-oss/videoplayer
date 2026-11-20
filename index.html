@@ -11,6 +11,13 @@
 :root{--bg:#000000;--fg:#f5f5f3;--mut:#9a9a94;--card:#161616;--line:#2e2e2c;--acc:#6b9bff;--del:#ef4444;--sat:max(env(safe-area-inset-top,0px),62px);--sab:env(safe-area-inset-bottom,0px);color-scheme:dark;box-sizing:border-box}
 :root[data-theme="gray"]{--bg:#525256;--fg:#f5f5f3;--mut:#d4d4d8;--card:#3f3f44;--line:#68686e;--acc:#6b9bff;--del:#ef4444;color-scheme:dark}
 :root[data-theme="white"]{--bg:#f4f4f2;--fg:#1b1b1a;--mut:#6b6b66;--card:#ffffff;--line:#d6d6d0;--acc:#2f6fed;--del:#dc2626;color-scheme:light}
+:root[data-theme="photo"]{--bg:#0b0b0c;--fg:#ffffff;--mut:#e4e4e7;--card:rgba(18,18,22,0.72);--line:rgba(255,255,255,0.22);--acc:#6b9bff;--del:#ef4444;color-scheme:dark}
+#bgimg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none;opacity:0;transition:opacity .25s ease}
+:root[data-theme="photo"] #bgimg.on{opacity:1}
+#bgdim{position:fixed;inset:0;z-index:0;pointer-events:none;background:rgba(0,0,0,0.42);opacity:0;transition:opacity .25s ease}
+:root[data-theme="photo"] #bgdim.on{opacity:1}
+:root[data-theme="photo"] .btn.sec,:root[data-theme="photo"] #prj select,:root[data-theme="photo"] #prj button,:root[data-theme="photo"] #pedit,:root[data-theme="photo"] #imp,:root[data-theme="photo"] #cap,:root[data-theme="photo"] #pdur,:root[data-theme="photo"] #cont,:root[data-theme="photo"] #delcur,:root[data-theme="photo"] #mu,:root[data-theme="photo"] .tile{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+header,#prj,#pedit,#imp,#stage,#prog,#bar,#ctl,#listwrap,#foot{position:relative;z-index:2}
 *,*::before,*::after{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent!important;-webkit-user-drag:none}
 input,select,textarea{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
 html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none}
@@ -155,11 +162,13 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 </style>
 </head>
 <body>
+<img id="bgimg" alt="" aria-hidden="true"><div id="bgdim" aria-hidden="true"></div>
 <header>
 <div class="brand" aria-label="ArnoShow"><span class="brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17c2.2-1.8 4.4-1.8 6.6 0s4.4 1.8 7.4 0" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/><polygon points="9.5 6.5 16.5 10.5 9.5 14.5" fill="#ffffff"/></svg></span><span class="brand-text">Arno<span>Show</span></span></div>
 <button class="btn danger" id="accord" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Accetta riordino</span></button>
 <button class="btn sec" id="und" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span id="undt">Annulla</span></button>
 <button class="btn sec" id="thm" type="button" title="Cambia tema sfondo">Sfondo: Nero</button>
+<label class="btn sec" id="bgpick" title="Scegli foto di sfondo dalla libreria"><input type="file" id="bgfile" accept="image/*" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><path d="M21 15l-5-5L5 21"/></svg><span>Foto sfondo</span></label>
 <button class="btn sec" id="ap" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"/><polygon points="12 15 17 21 7 21 12 15" fill="currentColor" stroke="none"/></svg><span>AirPlay</span></button>
 <label class="btn"><input type="file" id="file" accept="video/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Video</span></label>
 <label class="btn"><input type="file" id="filep" accept="image/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Foto</span></label>
@@ -738,20 +747,65 @@ function doUndo(){
 }
 und.addEventListener("click",doUndo);
 updUndo();
-var thm=document.getElementById("thm"),themes=[{id:"black",label:"Nero"},{id:"gray",label:"Grigio"},{id:"white",label:"Bianco"}],thmIdx=0;
+var thm=document.getElementById("thm"),bgfile=document.getElementById("bgfile"),bgimg=document.getElementById("bgimg"),bgdim=document.getElementById("bgdim");
+var hasBgPhoto=false,bgPhotoUrl="";
+var themes=[{id:"black",label:"Nero"},{id:"gray",label:"Grigio"},{id:"white",label:"Bianco"},{id:"photo",label:"Foto"}],thmIdx=0;
 try{var savedThm=localStorage.getItem("vpthm")||"black";var ti=themes.findIndex(function(x){return x.id===savedThm;});if(ti>=0)thmIdx=ti;}catch(e){}
+function setBgPhotoBlob(blob){
+  if(!blob)return;
+  if(bgPhotoUrl){try{URL.revokeObjectURL(bgPhotoUrl);}catch(e){}}
+  bgPhotoUrl=URL.createObjectURL(blob);
+  bgimg.src=bgPhotoUrl;
+  bgimg.classList.add("on");
+  bgdim.classList.add("on");
+  hasBgPhoto=true;
+  applyTheme();
+}
+function saveBgPhotoDB(blob){
+  if(!db)return;
+  try{
+    var tx=db.transaction("v","readwrite");
+    tx.objectStore("v").put({id:"__bg_photo__",blob:blob,pid:"__sys__",order:0});
+  }catch(e){}
+}
+function loadBgPhotoDB(){
+  if(!db)return;
+  try{
+    var q=db.transaction("v").objectStore("v").get("__bg_photo__");
+    q.onsuccess=function(){
+      if(q.result&&q.result.blob){setBgPhotoBlob(q.result.blob);}
+      else if(themes[thmIdx].id==="photo"){thmIdx=0;applyTheme();}
+    };
+  }catch(e){}
+}
 function applyTheme(){
-  var t=themes[thmIdx];
+  var avail=hasBgPhoto?themes:themes.filter(function(x){return x.id!=="photo";});
+  var curId=themes[thmIdx]?themes[thmIdx].id:"black";
+  if(!hasBgPhoto&&curId==="photo"){curId="black";thmIdx=0;}
+  var t=avail.filter(function(x){return x.id===curId;})[0]||avail[0];
   document.documentElement.setAttribute("data-theme",t.id);
   if(thm)thm.textContent="Sfondo: "+t.label;
 }
 applyTheme();
 if(thm)thm.addEventListener("click",function(){
-  thmIdx=(thmIdx+1)%themes.length;
-  try{localStorage.setItem("vpthm",themes[thmIdx].id);}catch(e){}
+  var avail=hasBgPhoto?themes:themes.filter(function(x){return x.id!=="photo";});
+  var curId=themes[thmIdx]?themes[thmIdx].id:"black";
+  var idx=avail.findIndex(function(x){return x.id===curId;});
+  var next=avail[(idx+1)%avail.length];
+  thmIdx=themes.findIndex(function(x){return x.id===next.id;});
+  try{localStorage.setItem("vpthm",next.id);}catch(e){}
   applyTheme();
 });
-fillProj();openDB(loadAll);
+if(bgfile)bgfile.addEventListener("change",function(){
+  var f=bgfile.files&&bgfile.files[0];
+  bgfile.value="";
+  if(!f)return;
+  thmIdx=themes.findIndex(function(x){return x.id==="photo";});
+  try{localStorage.setItem("vpthm","photo");}catch(e){}
+  setBgPhotoBlob(f);
+  saveBgPhotoDB(f);
+});
+fillProj();openDB(function(){loadBgPhotoDB();loadAll();});
 })();
 </script>
 </body>
