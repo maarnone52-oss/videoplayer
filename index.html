@@ -14,10 +14,28 @@
 *,*::before,*::after{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent!important;-webkit-user-drag:none}
 input,select,textarea{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
 html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none}
-body{margin:0;padding-top:var(--sat);padding-bottom:var(--sab);background:var(--bg);color:var(--fg);font:15px/1.3 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;box-sizing:border-box}
-header{position:relative;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px 4px;touch-action:none}
-h1{font-size:16px;margin:0;flex:1;min-width:85px}
-.btn{opacity:1!important;display:inline-block;padding:6px 10px;border-radius:9px;background:var(--acc);color:#fff;font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation}
+body{margin:0;padding-top:var(--sat);padding-bottom:var(--sab);background:var(--bg);color:var(--fg);font:15px/1.3 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* Barra superiore ridisegnata con pulsanti vettoriali nitidi ad alta definizione */
+header{position:relative;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px 6px;touch-action:none}
+h1{font-size:17px;font-weight:700;letter-spacing:-0.015em;margin:0;flex:1;min-width:85px;color:var(--fg)}
+.btn{
+  appearance:none;-webkit-appearance:none;
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  height:32px;padding:0 11px;border-radius:10px;border:0;
+  background:var(--acc);color:#ffffff;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+  font-size:13px;font-weight:600;line-height:1;letter-spacing:-0.01em;
+  white-space:nowrap;cursor:pointer;touch-action:manipulation;
+  box-shadow:0 1px 2px rgba(0,0,0,.14);
+  transition:transform .1s ease,background-color .15s ease
+}
+.btn:active:not(:disabled){transform:scale(.96)}
+.btn svg{width:14px;height:14px;flex:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.btn.sec{background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.btn.sec.active{background:var(--acc);color:#fff;border-color:var(--acc)}
+.btn:disabled{background:var(--line);color:var(--mut);border:1px solid transparent;box-shadow:none;cursor:default}
+
 video,#ph{width:100%;height:100%;object-fit:contain;background:#000;display:block;pointer-events:auto}
 #bar{display:flex;align-items:center;gap:8px;padding:3px 10px;font-size:13px;color:var(--mut);touch-action:none}
 #now{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -53,12 +71,10 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 #wait.on{display:flex}
 #nx{color:#e5e5e0;font-size:14px;padding:0 16px}
 #nxbtn{border:0;border-radius:10px;background:var(--acc);color:#fff;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;touch-action:manipulation}
-button.btn{border:0;font-family:inherit}
 .mv{position:absolute;bottom:34px;width:min(34px,40%);height:30px;border-radius:15px;border:0;background:var(--acc);color:#fff;font-size:18px;touch-action:manipulation}
 .mv.l{left:6px}
 .mv.r{right:6px}
 .num{position:absolute;left:6px;top:2px;z-index:2;pointer-events:none;font-weight:800;line-height:1.1;font-size:clamp(16px,calc(var(--tw,130px)*.3),44px);color:#fff;text-shadow:0 0 5px rgba(0,0,0,.9),0 0 2px rgba(0,0,0,.95)}
-.btn:disabled{opacity:.65!important;filter:saturate(.65)}
 #mu{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:2px 7px;font-size:16px;line-height:1.2;touch-action:manipulation}
 #mu.on{background:var(--acc);border-color:var(--acc)}
 
@@ -83,11 +99,11 @@ button.btn{border:0;font-family:inherit}
 <body>
 <header>
 <h1>I miei video</h1>
-<button class="btn" id="ord" type="button">Ordina</button>
-<button class="btn" id="und" type="button" disabled>↶ Annulla</button>
-<button class="btn" id="ap" type="button" hidden>AirPlay</button>
-<label class="btn"><input type="file" id="file" accept="video/*" multiple hidden>+ Video</label>
-<label class="btn"><input type="file" id="filep" accept="image/*" multiple hidden>+ Foto</label>
+<button class="btn sec" id="ord" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3"/></svg><span>Ordina</span></button>
+<button class="btn sec" id="und" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span id="undt">Annulla</span></button>
+<button class="btn sec" id="ap" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"/><polygon points="12 15 17 21 7 21 12 15" fill="currentColor" stroke="none"/></svg><span>AirPlay</span></button>
+<label class="btn"><input type="file" id="file" accept="video/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Video</span></label>
+<label class="btn"><input type="file" id="filep" accept="image/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Foto</span></label>
 </header>
 <div id="prj"><select id="psel" aria-label="Progetto"></select><button id="pnew" type="button">Nuovo</button><button id="pren" type="button">Rinomina</button><button id="pdel" type="button">Elimina</button></div>
 <div id="pedit" hidden><input id="pname" maxlength="40" placeholder="Nome del progetto"><button id="pok" type="button">OK</button><button id="pno" type="button">Annulla</button></div>
@@ -394,7 +410,12 @@ function move(i,d){
   if(cur===i)cur=j;else if(cur===j)cur=i;
   saveOrder();render();
 }
-ord.addEventListener("click",function(){sorting=!sorting;ord.textContent=sorting?"Fine":"Ordina";render();});
+function setSorting(on){
+  sorting=!!on;
+  ord.classList.toggle("active",sorting);
+  ord.querySelector("span").textContent=sorting?"Fine":"Ordina";
+}
+ord.addEventListener("click",function(){setSorting(!sorting);render();});
 v.addEventListener("webkitplaybacktargetavailabilitychanged",function(e){ap.hidden=e.availability!=="available";});
 ap.addEventListener("click",function(){try{v.webkitShowPlaybackTargetPicker();}catch(e){}});
 cap.addEventListener("click",function(){
@@ -467,7 +488,7 @@ function openProject(id){
   clearPhotoTimer();
   setStagePlaying(false);
   items.forEach(function(it){try{if(it.url)URL.revokeObjectURL(it.url);}catch(e){}});
-  items=[];queue=[];cur=-1;sorting=false;ord.textContent="Ordina";undo=[];updUndo();
+  items=[];queue=[];cur=-1;setSorting(false);undo=[];updUndo();
   v.pause();v.removeAttribute("src");v.load();ph.hidden=true;ph.removeAttribute("src");v.hidden=false;pp.disabled=false;pp.textContent="Pausa";now.textContent="Nessun video in riproduzione";tm.textContent="0:00 / 0:00";pf.style.width="0%";setWait(false);
   pid=id;saveProj();fillProj();render();loadAll();
 }
@@ -625,8 +646,8 @@ try{v.muted=localStorage.getItem("vpmute")==="1";}catch(e){}
 applyMute();
 mu.addEventListener("click",function(){v.muted=!v.muted;try{localStorage.setItem("vpmute",v.muted?"1":"0");}catch(e){}applyMute();});
 v.addEventListener("volumechange",applyMute);
-var undo=[],und=document.getElementById("und");
-function updUndo(){und.disabled=!undo.length;und.textContent="↶ Annulla"+(undo.length?" ("+undo.length+")":"");}
+var undo=[],und=document.getElementById("und"),undt=document.getElementById("undt");
+function updUndo(){und.disabled=!undo.length;undt.textContent="Annulla"+(undo.length?" ("+undo.length+")":"");}
 function pushUndo(e){undo.push(e);if(undo.length>50){var dropped=undo.shift();if(dropped&&dropped.del&&dropped.del.gone&&dropped.del.url){try{URL.revokeObjectURL(dropped.del.url);}catch(err){}}}updUndo();}
 function doUndo(){
   var e=undo.pop();if(!e)return;
