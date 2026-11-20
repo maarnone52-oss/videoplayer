@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Video Player</title>
+<style>
+:root{--bg:#f4f4f2;--fg:#1b1b1a;--mut:#6b6b66;--card:#ffffff;--line:#d6d6d0;--acc:#2f6fed;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141414;--fg:#f0f0ee;--mut:#9a9a94;--card:#1f1f1e;--line:#3a3a38;--acc:#6b9bff;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141414;--fg:#f0f0ee;--mut:#9a9a94;--card:#1f1f1e;--line:#3a3a38;--acc:#6b9bff;color-scheme:dark}
+html,body{height:100%}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;-webkit-user-select:none;user-select:none}
+header{display:flex;align-items:center;gap:10px;padding:10px 12px}
+h1{font-size:18px;margin:0;flex:1}
+.btn{display:inline-block;padding:9px 14px;border-radius:10px;background:var(--acc);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+video{width:100%;max-height:36vh;background:#000;display:block}
+#bar{display:flex;align-items:center;gap:10px;padding:6px 12px;font-size:14px;color:var(--mut)}
+#now{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#prog{height:16px;margin:8px 12px 0;background:var(--line);border-radius:8px;overflow:hidden;touch-action:none;cursor:pointer}
+#pf{height:100%;width:0;background:var(--acc)}
+#tm{font-variant-numeric:tabular-nums;white-space:nowrap}
+#foot{position:relative;z-index:10;padding:10px 12px}
+#go{width:100%;height:68px;border:0;border-radius:16px;background:var(--acc);color:#fff;font-size:24px;font-weight:700}
+#go:disabled{opacity:.35}
+#wait{display:none;position:fixed;inset:0;background:#000;z-index:5}
+#wait.on{display:block}
+body.waiting #foot{background:#000}
+#back{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;padding:8px 12px;border-radius:10px;border:1px solid #333;background:#000;color:#555;font-size:14px}
+#nx{position:absolute;left:0;right:0;bottom:calc(110px + env(safe-area-inset-bottom,0px));text-align:center;color:#444;font-size:15px;padding:0 20px}
+#list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;padding:12px;align-content:start}
+.tile{position:relative;background:var(--card);border:2px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer}
+.tile.on{border-color:var(--acc)}
+.th{aspect-ratio:16/9;background:#2a2a2a center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px}
+.nm{padding:6px 8px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.x{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:14px;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:15px}
+.hint{grid-column:1/-1;color:var(--mut);text-align:center;padding:30px 10px}
+</style>
+</head>
+<body>
+<header>
+<h1>I miei video</h1>
+<label class="btn"><input type="file" id="file" accept="video/*" multiple hidden>Aggiungi video</label>
+</header>
+<video id="v" playsinline></video>
+<div id="prog" aria-label="Avanzamento"><div id="pf"></div></div>
+<div id="bar"><span id="now">Nessun video in riproduzione</span><span id="tm">0:00 / 0:00</span></div>
+<div id="list"></div>
+<div id="foot"><button id="go" type="button">Continua</button></div>
+<div id="wait"><button id="back" type="button">Elenco</button><div id="nx"></div></div>
+<script>
+(function(){
+var list=document.getElementById("list"),v=document.getElementById("v"),now=document.getElementById("now"),inp=document.getElementById("file"),prog=document.getElementById("prog"),pf=document.getElementById("pf"),tm=document.getElementById("tm"),go=document.getElementById("go"),wait=document.getElementById("wait"),back=document.getElementById("back"),nx=document.getElementById("nx");
+var items=[],cur=-1,db=null,queue=[],busy=false;
+
+function openDB(cb){
+  try{
+    var r=indexedDB.open("videoplayer",1);
+    r.onupgradeneeded=function(){r.result.createObjectStore("v",{keyPath:"id"});};
+    r.onsuccess=function(){db=r.result;cb();};
+    r.onerror=function(){cb();};
+  }catch(e){cb();}
+}
+function put(it){
+  if(!db)return;
+  try{db.transaction("v","readwrite").objectStore("v").put({id:it.id,name:it.name,blob:it.blob,thumb:it.thumb,order:it.order});}catch(e){}
+}
+function del(id){
+  if(!db)return;
+  try{db.transaction("v","readwrite").objectStore("v").delete(id);}catch(e){}
+}
+function loadAll(){
+  if(!db){render();return;}
+  try{
+    var q=db.transaction("v").objectStore("v").getAll();
+    q.onsuccess=function(){
+      q.result.sort(function(a,b){return a.order-b.order;}).forEach(function(r){
+        items.push({id:r.id,name:r.name,blob:r.blob,thumb:r.thumb||"",order:r.order,url:URL.createObjectURL(r.blob)});
+      });
+      render();
+    };
+    q.onerror=render;
+  }catch(e){render();}
+}
+
+function makeThumb(it,cb){
+  var t=document.createElement("video"),done=false;
+  function fin(d){if(done)return;done=true;try{t.removeAttribute("src");t.load();}catch(e){}cb(d||"");}
+  t.muted=true;t.playsInline=true;t.preload="auto";
+  t.onloadeddata=function(){try{t.currentTime=Math.min(1,(t.duration||2)/2);}catch(e){fin();}};
+  t.onseeked=function(){
+    try{
+      var w=240,h=Math.round(w*t.videoHeight/t.videoWidth)||135,c=document.createElement("canvas");
+      c.width=w;c.height=h;c.getContext("2d").drawImage(t,0,0,w,h);
+      fin(c.toDataURL("image/jpeg",0.6));
+    }catch(e){fin();}
+  };
+  t.onerror=function(){fin();};
+  setTimeout(fin,5000);
+  t.src=it.url;
+}
+function pump(){
+  if(busy||!queue.length)return;
+  busy=true;
+  var it=queue.shift();
+  makeThumb(it,function(d){it.thumb=d;put(it);busy=false;render();pump();});
+}
+
+function render(){
+  updateGo();
+  list.innerHTML="";
+  if(!items.length){
+    var h=document.createElement("div");h.className="hint";
+    h.textContent="Nessun video. Tocca “Aggiungi video” per sceglierne uno o più.";
+    list.appendChild(h);return;
+  }
+  items.forEach(function(it,i){
+    var t=document.createElement("div");t.className="tile"+(i===cur?" on":"");
+    var th=document.createElement("div");th.className="th";
+    if(it.thumb)th.style.backgroundImage="url("+it.thumb+")";
+    th.textContent="▶";
+    var nm=document.createElement("div");nm.className="nm";nm.textContent=it.name;
+    var x=document.createElement("button");x.className="x";x.textContent="×";x.setAttribute("aria-label","Rimuovi");
+    x.onclick=function(e){e.stopPropagation();remove(i);};
+    t.onclick=function(){play(i);};
+    t.appendChild(th);t.appendChild(nm);t.appendChild(x);list.appendChild(t);
+  });
+}
+
+function play(i){
+  if(i<0||i>=items.length)return;
+  cur=i;
+  setWait(false);
+  v.src=items[i].url;
+  var p=v.play();if(p&&p.catch)p.catch(function(){});
+  now.textContent="In riproduzione: "+items[i].name;
+  render();
+  var on=list.querySelector(".tile.on");if(on&&on.scrollIntoView)on.scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+function fmt(s){if(!isFinite(s))s=0;var m=Math.floor(s/60),x=Math.floor(s%60);return m+":"+(x<10?"0":"")+x;}
+function updateGo(){go.disabled=items.length===0||(cur>=0&&cur+1>=items.length);}
+function setWait(on){
+  wait.classList.toggle("on",on);
+  document.body.classList.toggle("waiting",on);
+  if(on)nx.textContent=cur+1<items.length?"Prossimo: "+items[cur+1].name:"Fine dell’elenco";
+}
+v.addEventListener("ended",function(){setWait(true);});
+v.addEventListener("timeupdate",function(){
+  pf.style.width=(v.duration?v.currentTime/v.duration*100:0)+"%";
+  tm.textContent=fmt(v.currentTime)+" / "+fmt(v.duration);
+});
+v.addEventListener("click",function(){
+  if(!v.getAttribute("src"))return;
+  if(v.paused){var p=v.play();if(p&&p.catch)p.catch(function(){});}else v.pause();
+});
+function seek(e){
+  if(!isFinite(v.duration)||!v.duration)return;
+  var r=prog.getBoundingClientRect();
+  v.currentTime=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*v.duration;
+}
+prog.addEventListener("pointerdown",function(e){prog.setPointerCapture(e.pointerId);seek(e);});
+prog.addEventListener("pointermove",function(e){if(prog.hasPointerCapture(e.pointerId))seek(e);});
+go.addEventListener("click",function(){play(cur+1);});
+back.addEventListener("click",function(){setWait(false);});
+
+function remove(i){
+  var it=items[i];
+  try{URL.revokeObjectURL(it.url);}catch(e){}
+  del(it.id);
+  if(i===cur){v.pause();v.removeAttribute("src");v.load();cur=-1;now.textContent="Nessun video in riproduzione";}
+  else if(i<cur)cur--;
+  items.splice(i,1);render();
+}
+
+inp.addEventListener("change",function(){
+  var files=Array.prototype.slice.call(inp.files||[]),base=Date.now();
+  files.forEach(function(f,k){
+    var it={id:base+"-"+k,name:f.name.replace(/\.[^.]+$/,""),blob:f,url:URL.createObjectURL(f),thumb:"",order:base+k};
+    items.push(it);put(it);queue.push(it);
+  });
+  inp.value="";
+  render();pump();
+});
+
+openDB(loadAll);
+})();
+</script>
+</body>
+</html>
