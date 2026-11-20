@@ -49,7 +49,8 @@ video,#ph{width:100%;height:100%;object-fit:contain;background:#000;display:bloc
 body.dragging #delcur{opacity:1!important;border-color:var(--del);background:color-mix(in srgb,var(--del) 14%,var(--card));transform:scale(1.06)}
 body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#fff;transform:scale(1.22);box-shadow:0 0 0 4px color-mix(in srgb,var(--del) 30%,transparent)}
 #pp{flex:1;min-width:80px;height:38px;border:0;border-radius:9px;background:var(--acc);color:#fff;font-size:15px;font-weight:700;font-family:inherit;touch-action:manipulation}
-#cap,#pdur{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:9px;padding:0 10px;font-size:12px;font-family:inherit;height:38px;touch-action:manipulation}
+#cap,#pdur,#cont{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:9px;padding:0 10px;font-size:12px;font-family:inherit;height:38px;touch-action:manipulation;font-weight:600}
+#cont.on{background:var(--acc);border-color:var(--acc);color:#fff}
 #prj,#pedit{display:flex;gap:5px;padding:0 10px 5px;align-items:center;touch-action:none}
 #prj select,#pedit input{flex:1;min-width:0;padding:5px 7px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:14px;touch-action:manipulation}
 #prj button,#pedit button{padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:12px;font-family:inherit;touch-action:manipulation}
@@ -109,7 +110,7 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 <div id="stage"><video id="v" playsinline></video><img id="ph" alt="" hidden><div id="wait"></div></div>
 <div id="prog" aria-label="Avanzamento"><div id="pf"></div></div>
 <div id="bar"><span id="now">Nessun video in riproduzione</span><span id="tm">0:00 / 0:00</span><button id="mu" type="button" aria-label="Audio">🔊</button></div>
-<div id="ctl"><button id="pp" type="button">Pausa</button><button id="pdur" type="button" title="Durata foto">Foto: ∞</button><button id="cap" type="button">Anteprima</button><button id="delcur" type="button" aria-label="Elimina selezionato o trascina qui per eliminare" title="Elimina selezionato o trascina qui" disabled>🗑️</button></div>
+<div id="ctl"><button id="pp" type="button">Pausa</button><button id="cont" type="button" title="Riproduzione continua senza sosta">Senza sosta: Off</button><button id="pdur" type="button" title="Durata foto">Foto: ∞</button><button id="cap" type="button">Anteprima</button><button id="delcur" type="button" aria-label="Elimina selezionato o trascina qui per eliminare" title="Elimina selezionato o trascina qui" disabled>🗑️</button></div>
 <div id="listwrap">
   <div id="list"></div>
   <div id="zrail" role="slider" aria-label="Dimensione miniature" aria-valuemin="60" aria-valuemax="260" aria-valuenow="130" tabindex="0">
@@ -138,13 +139,23 @@ document.addEventListener("touchend",function(e){
 },{passive:false});
 document.addEventListener("wheel",function(e){if(e.ctrlKey||e.metaKey)e.preventDefault();},{passive:false});
 
-var list=document.getElementById("list"),v=document.getElementById("v"),now=document.getElementById("now"),inp=document.getElementById("file"),prog=document.getElementById("prog"),pf=document.getElementById("pf"),tm=document.getElementById("tm"),go=document.getElementById("go"),wait=document.getElementById("wait"),ord=document.getElementById("ord"),cap=document.getElementById("cap"),pp=document.getElementById("pp"),ph=document.getElementById("ph"),ap=document.getElementById("ap"),pdur=document.getElementById("pdur"),delcur=document.getElementById("delcur"),stage=document.getElementById("stage");
+var list=document.getElementById("list"),v=document.getElementById("v"),now=document.getElementById("now"),inp=document.getElementById("file"),prog=document.getElementById("prog"),pf=document.getElementById("pf"),tm=document.getElementById("tm"),go=document.getElementById("go"),wait=document.getElementById("wait"),ord=document.getElementById("ord"),cap=document.getElementById("cap"),pp=document.getElementById("pp"),ph=document.getElementById("ph"),ap=document.getElementById("ap"),pdur=document.getElementById("pdur"),cont=document.getElementById("cont"),delcur=document.getElementById("delcur"),stage=document.getElementById("stage");
 var items=[],cur=-1,db=null,queue=[],busy=false,sorting=false,imp={t:0,d:0},projs=[],pid="p1";
 var photoDurs=[0,3,5,8],photoDurIdx=0,photoTimer=null,photoPaused=false,photoElapsed=0,photoStart=0;
 try{projs=JSON.parse(localStorage.getItem("vpprojects")||"[]");pid=localStorage.getItem("vpcur")||"p1";}catch(e){}
 if(!projs.length)projs=[{id:"p1",name:"Progetto 1"}];
 if(!projs.some(function(p){return p.id===pid;}))pid=projs[0].id;
 try{var savedPdur=parseInt(localStorage.getItem("vppdur")||"0",10);var di=photoDurs.indexOf(savedPdur);if(di>=0)photoDurIdx=di;}catch(e){}
+var continuous=false;
+try{continuous=localStorage.getItem("vpcont")==="1";}catch(e){}
+function updateContBtn(){cont.classList.toggle("on",continuous);cont.textContent=continuous?"Senza sosta: On":"Senza sosta: Off";}
+updateContBtn();
+cont.addEventListener("click",function(){
+  continuous=!continuous;
+  try{localStorage.setItem("vpcont",continuous?"1":"0");}catch(e){}
+  updateContBtn();
+  if(continuous&&wait.classList.contains("on")&&cur+1<items.length){play(cur+1);}
+});
 function updatePdurBtn(){var d=photoDurs[photoDurIdx];pdur.textContent="Foto: "+(d?d+"s":"∞");}
 updatePdurBtn();
 pdur.addEventListener("click",function(){
@@ -176,7 +187,7 @@ function startPhotoMode(){
       clearPhotoTimer();
       setStagePlaying(false);
       pf.style.width="100%";tm.textContent=fmt(d)+" / "+fmt(d);
-      setWait(true);
+      if(continuous&&cur+1<items.length){play(cur+1);}else{setWait(true);}
       return;
     }
     pf.style.width=(photoElapsed/d*100)+"%";
@@ -369,7 +380,7 @@ function setWait(on){
   document.body.classList.toggle("waiting",on);
   if(on)setStagePlaying(false);
 }
-v.addEventListener("ended",function(){setStagePlaying(false);setWait(true);});
+v.addEventListener("ended",function(){setStagePlaying(false);if(continuous&&cur+1<items.length){play(cur+1);}else{setWait(true);}});
 v.addEventListener("timeupdate",function(){
   pf.style.width=(v.duration?v.currentTime/v.duration*100:0)+"%";
   tm.textContent=fmt(v.currentTime)+" / "+fmt(v.duration);
