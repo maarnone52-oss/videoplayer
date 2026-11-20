@@ -8,9 +8,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>ArnoShow</title>
 <style>
-:root{--bg:#f4f4f2;--fg:#1b1b1a;--mut:#6b6b66;--card:#ffffff;--line:#d6d6d0;--acc:#2f6fed;--del:#dc2626;--sat:max(env(safe-area-inset-top,0px),62px);--sab:env(safe-area-inset-bottom,0px);color-scheme:light;box-sizing:border-box}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141414;--fg:#f0f0ee;--mut:#9a9a94;--card:#1f1f1e;--line:#3a3a38;--acc:#6b9bff;--del:#ef4444;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#141414;--fg:#f0f0ee;--mut:#9a9a94;--card:#1f1f1e;--line:#3a3a38;--acc:#6b9bff;--del:#ef4444;color-scheme:dark}
+:root{--bg:#000000;--fg:#f5f5f3;--mut:#9a9a94;--card:#161616;--line:#2e2e2c;--acc:#6b9bff;--del:#ef4444;--sat:max(env(safe-area-inset-top,0px),62px);--sab:env(safe-area-inset-bottom,0px);color-scheme:dark;box-sizing:border-box}
+:root[data-theme="gray"]{--bg:#525256;--fg:#f5f5f3;--mut:#d4d4d8;--card:#3f3f44;--line:#68686e;--acc:#6b9bff;--del:#ef4444;color-scheme:dark}
+:root[data-theme="white"]{--bg:#f4f4f2;--fg:#1b1b1a;--mut:#6b6b66;--card:#ffffff;--line:#d6d6d0;--acc:#2f6fed;--del:#dc2626;color-scheme:light}
 *,*::before,*::after{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important;-webkit-tap-highlight-color:transparent!important;-webkit-user-drag:none}
 input,select,textarea{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
 html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none}
@@ -156,6 +156,7 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 <div class="brand" aria-label="ArnoShow"><span class="brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17c2.2-1.8 4.4-1.8 6.6 0s4.4 1.8 7.4 0" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/><polygon points="9.5 6.5 16.5 10.5 9.5 14.5" fill="#ffffff"/></svg></span><span class="brand-text">Arno<span>Show</span></span></div>
 <button class="btn danger" id="accord" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Accetta riordino</span></button>
 <button class="btn sec" id="und" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span id="undt">Annulla</span></button>
+<button class="btn sec" id="thm" type="button" title="Cambia tema sfondo">Sfondo: Nero</button>
 <button class="btn sec" id="ap" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"/><polygon points="12 15 17 21 7 21 12 15" fill="currentColor" stroke="none"/></svg><span>AirPlay</span></button>
 <label class="btn"><input type="file" id="file" accept="video/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Video</span></label>
 <label class="btn"><input type="file" id="filep" accept="image/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Foto</span></label>
@@ -737,6 +738,19 @@ function doUndo(){
 }
 und.addEventListener("click",doUndo);
 updUndo();
+var thm=document.getElementById("thm"),themes=[{id:"black",label:"Nero"},{id:"gray",label:"Grigio"},{id:"white",label:"Bianco"}],thmIdx=0;
+try{var savedThm=localStorage.getItem("vpthm")||"black";var ti=themes.findIndex(function(x){return x.id===savedThm;});if(ti>=0)thmIdx=ti;}catch(e){}
+function applyTheme(){
+  var t=themes[thmIdx];
+  document.documentElement.setAttribute("data-theme",t.id);
+  if(thm)thm.textContent="Sfondo: "+t.label;
+}
+applyTheme();
+if(thm)thm.addEventListener("click",function(){
+  thmIdx=(thmIdx+1)%themes.length;
+  try{localStorage.setItem("vpthm",themes[thmIdx].id);}catch(e){}
+  applyTheme();
+});
 fillProj();openDB(loadAll);
 })();
 </script>
