@@ -15,6 +15,44 @@
 input,select,textarea{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
 html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none}
 body{margin:0;padding-top:var(--sat);padding-bottom:var(--sab);background:var(--bg);color:var(--fg);font:15px/1.3 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+/* Adattamento nativo a due colonne in orientamento orizzontale (landscape) */
+@media screen and (orientation:landscape) and (max-height:540px){
+  body{
+    display:grid;
+    grid-template-columns:46% 54%;
+    grid-template-rows:auto auto auto 1fr auto auto;
+    grid-template-areas:
+      "hdr hdr"
+      "prj list"
+      "pedit list"
+      "stage list"
+      "prog list"
+      "bar ctl"
+      "foot ctl";
+    padding-top:max(env(safe-area-inset-top,0px),8px);
+    padding-bottom:max(env(safe-area-inset-bottom,0px),6px);
+    padding-left:max(env(safe-area-inset-left,0px),14px);
+    padding-right:max(env(safe-area-inset-right,0px),14px);
+    column-gap:8px;
+  }
+  header{grid-area:hdr;padding:2px 4px 4px;flex-wrap:nowrap;overflow-x:auto}
+  .brand{min-width:auto;flex:1}
+  #prj{grid-area:prj;padding:0 4px 4px}
+  #pedit{grid-area:pedit;padding:0 4px 4px}
+  #imp{position:fixed;left:16px;right:16px;top:46px;z-index:50;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 10px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+  #stage{grid-area:stage;width:100%;height:100%;min-height:0;margin:0;border-radius:10px}
+  #prog{grid-area:prog;margin:5px 2px 0;height:10px}
+  #bar{grid-area:bar;padding:2px 4px;font-size:12px}
+  #foot{grid-area:foot;padding:2px 0 0}
+  #go{height:40px;font-size:16px;border-radius:11px}
+  #listwrap{grid-area:list;min-height:0;height:100%}
+  #list{padding:2px 4px 4px 4px;gap:6px}
+  #zrail{width:44px;padding:2px 2px 2px 4px}
+  #ctl{grid-area:ctl;padding:4px 4px 0;align-items:center;flex-wrap:nowrap}
+  #delcur,#pp,#cap,#pdur,#cont{height:40px;padding:0 8px;font-size:11.5px}
+  #delcur{padding:0 11px;font-size:16px}
+  #pp{min-width:64px;font-size:14px}
+}
 
 /* Barra superiore ridisegnata con pulsanti vettoriali nitidi ad alta definizione */
 header{position:relative;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px 6px;touch-action:none}
@@ -139,31 +177,11 @@ document.addEventListener("touchmove",function(e){
 },{passive:false});
 var lastTouchEnd=0;
 document.addEventListener("touchend",function(e){
-
-  
   var nowT=Date.now();
   if(nowT-lastTouchEnd<=300&&!e.target.closest("input,select,textarea")){e.preventDefault();}
   lastTouchEnd=nowT;
 },{passive:false});
-
-  
-  
-  
-
-
-
-
-
-
-  
-
-
-
-  
-  
-  
-  
-  document.addEventListener("wheel",function(e){if(e.ctrlKey||e.metaKey)e.preventDefault();},{passive:false});
+document.addEventListener("wheel",function(e){if(e.ctrlKey||e.metaKey)e.preventDefault();},{passive:false});
 
 var list=document.getElementById("list"),v=document.getElementById("v"),now=document.getElementById("now"),inp=document.getElementById("file"),prog=document.getElementById("prog"),pf=document.getElementById("pf"),tm=document.getElementById("tm"),go=document.getElementById("go"),wait=document.getElementById("wait"),cap=document.getElementById("cap"),pp=document.getElementById("pp"),ph=document.getElementById("ph"),ap=document.getElementById("ap"),pdur=document.getElementById("pdur"),cont=document.getElementById("cont"),delcur=document.getElementById("delcur"),stage=document.getElementById("stage");
 var items=[],cur=-1,db=null,queue=[],busy=false,pendingOrder=false,imp={t:0,d:0},projs=[],pid="p1";
