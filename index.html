@@ -34,6 +34,11 @@ h1{font-size:17px;font-weight:700;letter-spacing:-0.015em;margin:0;flex:1;min-wi
 .btn svg{width:14px;height:14px;flex:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;fill:none}
 .btn.sec{background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.06)}
 .btn.sec.active{background:var(--acc);color:#fff;border-color:var(--acc)}
+@keyframes pulseRed{
+  0%,100%{box-shadow:0 0 0 2px color-mix(in srgb,var(--del) 55%,transparent),0 2px 8px color-mix(in srgb,var(--del) 45%,transparent)}
+  50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--del) 20%,transparent),0 2px 12px color-mix(in srgb,var(--del) 65%,transparent)}
+}
+.btn.danger{background:var(--del);color:#fff;border:0;animation:pulseRed 1.4s ease-in-out infinite}
 .btn:disabled{background:var(--line);color:var(--mut);border:1px solid transparent;box-shadow:none;cursor:default}
 
 video,#ph{width:100%;height:100%;object-fit:contain;background:#000;display:block;pointer-events:auto}
@@ -99,6 +104,7 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 <header>
 <h1>I miei video</h1>
 <button class="btn sec" id="ord" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3"/></svg><span>Ordina</span></button>
+<button class="btn danger" id="accord" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Accetta riordino</span></button>
 <button class="btn sec" id="und" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span id="undt">Annulla</span></button>
 <button class="btn sec" id="ap" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"/><polygon points="12 15 17 21 7 21 12 15" fill="currentColor" stroke="none"/></svg><span>AirPlay</span></button>
 <label class="btn"><input type="file" id="file" accept="video/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Video</span></label>
@@ -140,7 +146,8 @@ document.addEventListener("touchend",function(e){
 document.addEventListener("wheel",function(e){if(e.ctrlKey||e.metaKey)e.preventDefault();},{passive:false});
 
 var list=document.getElementById("list"),v=document.getElementById("v"),now=document.getElementById("now"),inp=document.getElementById("file"),prog=document.getElementById("prog"),pf=document.getElementById("pf"),tm=document.getElementById("tm"),go=document.getElementById("go"),wait=document.getElementById("wait"),ord=document.getElementById("ord"),cap=document.getElementById("cap"),pp=document.getElementById("pp"),ph=document.getElementById("ph"),ap=document.getElementById("ap"),pdur=document.getElementById("pdur"),cont=document.getElementById("cont"),delcur=document.getElementById("delcur"),stage=document.getElementById("stage");
-var items=[],cur=-1,db=null,queue=[],busy=false,sorting=false,imp={t:0,d:0},projs=[],pid="p1";
+var items=[],cur=-1,db=null,queue=[],busy=false,sorting=false,pendingOrder=false,imp={t:0,d:0},projs=[],pid="p1";
+var accord=document.getElementById("accord");
 var photoDurs=[0,3,5,8],photoDurIdx=0,photoTimer=null,photoPaused=false,photoElapsed=0,photoStart=0;
 try{projs=JSON.parse(localStorage.getItem("vpprojects")||"[]");pid=localStorage.getItem("vpcur")||"p1";}catch(e){}
 if(!projs.length)projs=[{id:"p1",name:"Progetto 1"}];
@@ -406,12 +413,25 @@ function seek(e){
 prog.addEventListener("pointerdown",function(e){prog.setPointerCapture(e.pointerId);seek(e);});
 prog.addEventListener("pointermove",function(e){if(prog.hasPointerCapture(e.pointerId))seek(e);});
 go.addEventListener("click",function(){play(cur<0?0:cur+1);});
-function saveOrder(){try{localStorage.setItem("vporder-"+pid,JSON.stringify(items.map(function(x){return x.id;})));}catch(e){}}
+function setPendingOrder(on){
+  pendingOrder=!!on;
+  accord.hidden=!pendingOrder;
+}
+function saveOrder(keepPending){
+  try{localStorage.setItem("vporder-"+pid,JSON.stringify(items.map(function(x){return x.id;})));}catch(e){}
+  if(!keepPending)setPendingOrder(false);
+}
+function acceptOrder(){
+  saveOrder(false);
+  if(sorting)setSorting(false);
+  render();
+}
+accord.addEventListener("click",acceptOrder);
 function move(i,d){
   var j=i+d;if(j<0||j>=items.length)return;
   var t=items[i];pushUndo({order:items.map(function(x){return x.id;})});items[i]=items[j];items[j]=t;
   if(cur===i)cur=j;else if(cur===j)cur=i;
-  saveOrder();render();
+  saveOrder(true);setPendingOrder(true);render();
 }
 function setSorting(on){
   sorting=!!on;
@@ -439,7 +459,7 @@ function remove(i){
   del(it.id);
   if(i===cur){clearPhotoTimer();setStagePlaying(false);setWait(false);v.pause();v.removeAttribute("src");v.load();ph.hidden=true;ph.removeAttribute("src");v.hidden=false;pp.disabled=false;pp.textContent="Pausa";cur=-1;now.textContent="Nessun video in riproduzione";tm.textContent="0:00 / 0:00";pf.style.width="0%";}
   else if(i<cur)cur--;
-  items.splice(i,1);saveOrder();render();
+  items.splice(i,1);saveOrder(true);render();
 }
 delcur.addEventListener("click",function(){
   if(cur>=0&&cur<items.length)remove(cur);
@@ -454,7 +474,7 @@ function addFiles(inp,kind){
     items.push(it);put(it,step);queue.push(it);
   });
   inp.value="";
-  saveOrder();saveNums();
+  saveOrder(true);saveNums();
   render();pump();
 }
 inp.addEventListener("change",function(){addFiles(inp,"video");});
@@ -491,7 +511,7 @@ function openProject(id){
   clearPhotoTimer();
   setStagePlaying(false);
   items.forEach(function(it){try{if(it.url)URL.revokeObjectURL(it.url);}catch(e){}});
-  items=[];queue=[];cur=-1;setSorting(false);undo=[];updUndo();
+  items=[];queue=[];cur=-1;setSorting(false);setPendingOrder(false);undo=[];updUndo();
   v.pause();v.removeAttribute("src");v.load();ph.hidden=true;ph.removeAttribute("src");v.hidden=false;pp.disabled=false;pp.textContent="Pausa";now.textContent="Nessun video in riproduzione";tm.textContent="0:00 / 0:00";pf.style.width="0%";setWait(false);
   pid=id;saveProj();fillProj();render();loadAll();
 }
@@ -598,7 +618,7 @@ function endDrag(apply){
     pushUndo({order:items.map(function(x){return x.id;})});
     var moved=items.splice(d.i,1)[0];items.splice(d.over,0,moved);
     cur=curItem?items.indexOf(curItem):-1;
-    saveOrder();
+    saveOrder(true);setPendingOrder(true);
   }
   render();
 }
@@ -666,7 +686,9 @@ function doUndo(){
     items=out;
   }
   cur=curItem?items.indexOf(curItem):-1;
-  saveOrder();updUndo();render();
+  saveOrder(!!e.order);
+  if(e.order)setPendingOrder(undo.some(function(u){return !!u.order;}));
+  updUndo();render();
 }
 und.addEventListener("click",doUndo);
 updUndo();
