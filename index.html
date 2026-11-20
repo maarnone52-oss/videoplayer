@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Video Player </title>
+<title>Video Player</title>
 <style>
 :root{--bg:#f4f4f2;--fg:#1b1b1a;--mut:#6b6b66;--card:#ffffff;--line:#d6d6d0;--acc:#2f6fed;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141414;--fg:#f0f0ee;--mut:#9a9a94;--card:#1f1f1e;--line:#3a3a38;--acc:#6b9bff;color-scheme:dark}}
@@ -21,7 +21,16 @@ video{width:100%;max-height:36vh;background:#000;display:block}
 #prog{height:16px;margin:8px 12px 0;background:var(--line);border-radius:8px;overflow:hidden;touch-action:none;cursor:pointer}
 #pf{height:100%;width:0;background:var(--acc)}
 #tm{font-variant-numeric:tabular-nums;white-space:nowrap}
-#cap{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:4px 8px;font-size:13px;font-family:inherit}
+[hidden]{display:none!important}
+#ctl{display:flex;gap:8px;padding:0 12px 8px}
+#pp{flex:1;height:44px;border:0;border-radius:10px;background:var(--acc);color:#fff;font-size:17px;font-weight:700;font-family:inherit}
+#cap{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit}
+#prj,#pedit{display:flex;gap:6px;padding:0 12px 8px;align-items:center}
+#prj select,#pedit input{flex:1;min-width:0;padding:7px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:15px}
+#prj button,#pedit button{padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:13px;font-family:inherit}
+#imp{padding:0 12px 8px;font-size:13px;color:var(--mut)}
+#impb{height:10px;background:var(--line);border-radius:5px;overflow:hidden;margin-top:4px}
+#impf{height:100%;width:0;background:var(--acc)}
 #foot{position:relative;z-index:10;padding:10px 12px}
 #go{width:100%;height:68px;border:0;border-radius:16px;background:var(--acc);color:#fff;font-size:24px;font-weight:700}
 #go:disabled{opacity:.35}
@@ -49,16 +58,23 @@ button.btn{border:0;font-family:inherit}
 <button class="btn" id="ap" type="button" hidden>AirPlay</button>
 <label class="btn"><input type="file" id="file" accept="video/*" multiple hidden>Aggiungi video</label>
 </header>
+<div id="prj"><select id="psel" aria-label="Progetto"></select><button id="pnew" type="button">Nuovo</button><button id="pren" type="button">Rinomina</button><button id="pdel" type="button">Elimina</button></div>
+<div id="pedit" hidden><input id="pname" maxlength="40" placeholder="Nome del progetto"><button id="pok" type="button">OK</button><button id="pno" type="button">Annulla</button></div>
+<div id="imp" hidden><div id="impt"></div><div id="impb"><div id="impf"></div></div></div>
 <div id="stage"><video id="v" playsinline></video><div id="wait"><div id="nx"></div></div></div>
 <div id="prog" aria-label="Avanzamento"><div id="pf"></div></div>
-<div id="bar"><span id="now">Nessun video in riproduzione</span><span id="tm">0:00 / 0:00</span><button id="cap" type="button">Anteprima</button></div>
+<div id="bar"><span id="now">Nessun video in riproduzione</span><span id="tm">0:00 / 0:00</span></div>
+<div id="ctl"><button id="pp" type="button">Pausa</button><button id="cap" type="button">Anteprima</button></div>
 <div id="list"></div>
 <div id="foot"><button id="go" type="button">Continua</button></div>
 
 <script>
 (function(){
-var list=document.getElementById("list"),v=document.getElementById("v"),now=document.getElementById("now"),inp=document.getElementById("file"),prog=document.getElementById("prog"),pf=document.getElementById("pf"),tm=document.getElementById("tm"),go=document.getElementById("go"),wait=document.getElementById("wait"),ord=document.getElementById("ord"),cap=document.getElementById("cap"),ap=document.getElementById("ap"),nx=document.getElementById("nx");
-var items=[],cur=-1,db=null,queue=[],busy=false,sorting=false;
+var list=document.getElementById("list"),v=document.getElementById("v"),now=document.getElementById("now"),inp=document.getElementById("file"),prog=document.getElementById("prog"),pf=document.getElementById("pf"),tm=document.getElementById("tm"),go=document.getElementById("go"),wait=document.getElementById("wait"),ord=document.getElementById("ord"),cap=document.getElementById("cap"),pp=document.getElementById("pp"),ap=document.getElementById("ap"),nx=document.getElementById("nx");
+var items=[],cur=-1,db=null,queue=[],busy=false,sorting=false,imp={t:0,d:0},projs=[],pid="p1";
+try{projs=JSON.parse(localStorage.getItem("vpprojects")||"[]");pid=localStorage.getItem("vpcur")||"p1";}catch(e){}
+if(!projs.length)projs=[{id:"p1",name:"Progetto 1"}];
+if(!projs.some(function(p){return p.id===pid;}))pid=projs[0].id;
 
 function openDB(cb){
   try{
@@ -68,9 +84,13 @@ function openDB(cb){
     r.onerror=function(){cb();};
   }catch(e){cb();}
 }
-function put(it){
-  if(!db)return;
-  try{db.transaction("v","readwrite").objectStore("v").put({id:it.id,name:it.name,blob:it.blob,thumb:it.thumb,order:it.order,tv:it.tv||0});}catch(e){}
+function put(it,cb){
+  if(!db){if(cb)cb();return;}
+  try{
+    var tx=db.transaction("v","readwrite");
+    tx.objectStore("v").put({id:it.id,name:it.name,blob:it.blob,thumb:it.thumb,order:it.order,tv:it.tv||0,pid:it.pid||"p1"});
+    if(cb){tx.oncomplete=cb;tx.onerror=cb;tx.onabort=cb;}
+  }catch(e){if(cb)cb();}
 }
 function del(id){
   if(!db)return;
@@ -81,10 +101,10 @@ function loadAll(){
   try{
     var q=db.transaction("v").objectStore("v").getAll();
     q.onsuccess=function(){
-      var sv=[];try{sv=JSON.parse(localStorage.getItem("vporder")||"[]");}catch(e){}
+      var sv=[];try{sv=JSON.parse(localStorage.getItem("vporder-"+pid)||localStorage.getItem("vporder")||"[]");}catch(e){}
       function rk(r){var k=sv.indexOf(r.id);return k<0?1e9+r.order:k;}
-      q.result.sort(function(a,b){return rk(a)-rk(b);}).forEach(function(r){
-        var it={id:r.id,name:r.name,blob:r.blob,thumb:r.thumb||"",order:r.order,tv:r.tv||0,url:URL.createObjectURL(r.blob)};
+      q.result.filter(function(r){return (r.pid||"p1")===pid;}).sort(function(a,b){return rk(a)-rk(b);}).forEach(function(r){
+        var it={id:r.id,name:r.name,blob:r.blob,thumb:r.thumb||"",order:r.order,tv:r.tv||0,pid:pid,url:URL.createObjectURL(r.blob)};
         items.push(it);if(it.tv<3)queue.push(it);
       });
       render();pump();
@@ -147,7 +167,7 @@ function pump(){
   if(busy||!queue.length)return;
   busy=true;
   var it=queue.shift();
-  makeThumb(it,function(d){it.thumb=d;it.tv=3;put(it);busy=false;render();pump();});
+  makeThumb(it,function(d){it.thumb=d;it.tv=3;put(it);if(it.cnt){it.cnt=false;step();}busy=false;render();pump();});
 }
 
 function render(){
@@ -212,7 +232,7 @@ function seek(e){
 prog.addEventListener("pointerdown",function(e){prog.setPointerCapture(e.pointerId);seek(e);});
 prog.addEventListener("pointermove",function(e){if(prog.hasPointerCapture(e.pointerId))seek(e);});
 go.addEventListener("click",function(){play(cur+1);});
-function saveOrder(){try{localStorage.setItem("vporder",JSON.stringify(items.map(function(x){return x.id;})));}catch(e){}}
+function saveOrder(){try{localStorage.setItem("vporder-"+pid,JSON.stringify(items.map(function(x){return x.id;})));}catch(e){}}
 function move(i,d){
   var j=i+d;if(j<0||j>=items.length)return;
   var t=items[i];items[i]=items[j];items[j]=t;
@@ -243,16 +263,61 @@ function remove(i){
 
 inp.addEventListener("change",function(){
   var files=Array.prototype.slice.call(inp.files||[]),base=Date.now();
+  imp.t+=files.length*2;showImp();
   files.forEach(function(f,k){
-    var it={id:base+"-"+k,name:f.name.replace(/\.[^.]+$/,""),blob:f,url:URL.createObjectURL(f),thumb:"",order:base+k};
-    items.push(it);put(it);queue.push(it);
+    var it={id:base+"-"+k,name:f.name.replace(/\.[^.]+$/,""),blob:f,url:URL.createObjectURL(f),thumb:"",order:base+k,pid:pid,cnt:true};
+    items.push(it);put(it,step);queue.push(it);
   });
   inp.value="";
   saveOrder();
   render();pump();
 });
 
-openDB(loadAll);
+function showImp(){
+  var e=document.getElementById("imp");
+  if(imp.t<=imp.d){e.hidden=true;imp.t=0;imp.d=0;return;}
+  e.hidden=false;
+  document.getElementById("impf").style.width=(imp.d/imp.t*100)+"%";
+  document.getElementById("impt").textContent="Importazione in corso: "+Math.floor(imp.d/2)+" / "+Math.round(imp.t/2)+" video";
+}
+function step(){imp.d++;showImp();}
+pp.addEventListener("click",function(){
+  if(!v.getAttribute("src"))return;
+  if(v.paused){var p=v.play();if(p&&p.catch)p.catch(function(){});}else v.pause();
+});
+v.addEventListener("play",function(){pp.textContent="Pausa";});
+v.addEventListener("pause",function(){pp.textContent="Riprendi";});
+v.addEventListener("ended",function(){pp.textContent="Pausa";});
+var psel=document.getElementById("psel"),pedit=document.getElementById("pedit"),pname=document.getElementById("pname"),pdel=document.getElementById("pdel"),pmode="",armed=false;
+function saveProj(){try{localStorage.setItem("vpprojects",JSON.stringify(projs));localStorage.setItem("vpcur",pid);}catch(e){}}
+function fillProj(){psel.innerHTML="";projs.forEach(function(p){var o=document.createElement("option");o.value=p.id;o.textContent=p.name;psel.appendChild(o);});psel.value=pid;}
+function openProject(id){
+  items.forEach(function(it){try{URL.revokeObjectURL(it.url);}catch(e){}});
+  items=[];queue=[];cur=-1;sorting=false;ord.textContent="Ordina";
+  v.pause();v.removeAttribute("src");v.load();now.textContent="Nessun video in riproduzione";setWait(false);
+  pid=id;saveProj();fillProj();render();loadAll();
+}
+function askName(mode,txt){pmode=mode;pname.value=txt;pedit.hidden=false;pname.focus();}
+psel.addEventListener("change",function(){openProject(psel.value);});
+document.getElementById("pnew").addEventListener("click",function(){askName("new","");});
+document.getElementById("pren").addEventListener("click",function(){var p=projs.filter(function(x){return x.id===pid;})[0];askName("ren",p?p.name:"");});
+document.getElementById("pno").addEventListener("click",function(){pedit.hidden=true;});
+document.getElementById("pok").addEventListener("click",function(){
+  var n=pname.value.replace(/^\s+|\s+$/g,"");if(!n)return;
+  pedit.hidden=true;
+  if(pmode==="new"){var id="p"+Date.now();projs.push({id:id,name:n});openProject(id);}
+  else{projs.forEach(function(p){if(p.id===pid)p.name=n;});saveProj();fillProj();}
+});
+pdel.addEventListener("click",function(){
+  if(projs.length<2){pdel.textContent="Serve un altro";setTimeout(function(){pdel.textContent="Elimina";},1500);return;}
+  if(!armed){armed=true;pdel.textContent="Conferma?";setTimeout(function(){armed=false;pdel.textContent="Elimina";},3000);return;}
+  armed=false;pdel.textContent="Elimina";
+  items.forEach(function(it){del(it.id);});
+  try{localStorage.removeItem("vporder-"+pid);}catch(e){}
+  var gone=pid;projs=projs.filter(function(p){return p.id!==gone;});
+  openProject(projs[0].id);
+});
+fillProj();openDB(loadAll);
 })();
 </script>
 </body>
