@@ -66,10 +66,10 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 #imp{padding:0 10px 5px;font-size:12px;color:var(--mut);touch-action:none}
 #impb{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:3px}
 #impf{height:100%;width:0;background:var(--acc)}
-#foot{position:relative;z-index:10;padding:6px 10px 8px;display:flex;align-items:center;justify-content:center;touch-action:none}
-#go{width:72px;height:72px;padding:0;border:0;border-radius:50%;background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);color:#fff;font-size:13.5px;font-weight:800;line-height:1.12;letter-spacing:-0.01em;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:0 4px 12px rgba(234,88,12,.38);transition:transform .1s ease,opacity .15s ease;touch-action:manipulation}
+#foot{position:relative;z-index:10;padding:12px 10px 4px;display:flex;align-items:center;justify-content:center;touch-action:none}
+#go{width:88px;height:88px;padding:0;border:0;border-radius:50%;background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);color:#fff;font-size:16px;font-weight:800;line-height:1.12;letter-spacing:-0.01em;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:0 4px 14px rgba(234,88,12,.42);transition:transform .1s ease,opacity .15s ease;touch-action:manipulation}
 #go:active:not(:disabled){transform:scale(.95)}
-#go .go-sub{font-size:11px;font-weight:700;opacity:.92;margin-top:2px}
+#go .go-sub{font-size:12.5px;font-weight:700;opacity:.92;margin-top:3px}
 #go:disabled{opacity:.35;box-shadow:none}
 
 @keyframes playPulse{
@@ -144,9 +144,9 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
   #delcur,#pp,#cap,#pdur,#cont{height:30px;padding:0 7px;font-size:11px;border-radius:8px}
   #delcur{padding:0 9px;font-size:14px}
   #pp{min-width:56px;font-size:12.5px}
-  #foot{grid-area:foot;padding:4px 2px 0;display:flex;align-items:center;justify-content:center}
-  #go{width:58px;height:58px;font-size:11.5px;border-radius:50%}
-  #go .go-sub{font-size:10px;margin-top:1px}
+  #foot{grid-area:foot;padding:8px 2px 0;display:flex;align-items:center;justify-content:center}
+  #go{width:72px;height:72px;font-size:13.5px;border-radius:50%}
+  #go .go-sub{font-size:11px;margin-top:2px}
 }
 
 </style>
