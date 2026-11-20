@@ -438,10 +438,7 @@ v.addEventListener("timeupdate",function(){
   pf.style.width=(v.duration?v.currentTime/v.duration*100:0)+"%";
   tm.textContent=fmt(v.currentTime)+" / "+fmt(v.duration);
 });
-v.addEventListener("click",function(){
-  if(!v.getAttribute("src"))return;
-  if(v.paused){var p=v.play();if(p&&p.catch)p.catch(function(){});}else v.pause();
-});
+
 function seek(e){
   if(cur>=0&&items[cur]&&items[cur].kind==="photo"){
     var d=photoDurs[photoDurIdx];
