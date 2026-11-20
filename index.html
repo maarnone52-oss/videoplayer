@@ -110,7 +110,7 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 <div id="stage"><video id="v" playsinline></video><img id="ph" alt="" hidden><div id="wait"></div></div>
 <div id="prog" aria-label="Avanzamento"><div id="pf"></div></div>
 <div id="bar"><span id="now">Nessun video in riproduzione</span><span id="tm">0:00 / 0:00</span><button id="mu" type="button" aria-label="Audio">🔊</button></div>
-<div id="ctl"><button id="pp" type="button">Pausa</button><button id="cont" type="button" title="Riproduzione continua senza sosta">Senza sosta: Off</button><button id="pdur" type="button" title="Durata foto">Foto: ∞</button><button id="cap" type="button">Anteprima</button><button id="delcur" type="button" aria-label="Elimina selezionato o trascina qui per eliminare" title="Elimina selezionato o trascina qui" disabled>🗑️</button></div>
+<div id="ctl"><button id="pp" type="button">Pausa</button><button id="cont" type="button" title="Riproduzione continua senza sosta">Senza sosta: Off</button><button id="pdur" type="button" title="Durata foto">Foto: ∞</button><button id="cap" type="button">Scegli miniatura</button><button id="delcur" type="button" aria-label="Elimina selezionato o trascina qui per eliminare" title="Elimina selezionato o trascina qui" disabled>🗑️</button></div>
 <div id="listwrap">
   <div id="list"></div>
   <div id="zrail" role="slider" aria-label="Dimensione miniature" aria-valuemin="60" aria-valuemax="260" aria-valuenow="130" tabindex="0">
@@ -427,7 +427,7 @@ cap.addEventListener("click",function(){
     var w=240,h=Math.round(w*v.videoHeight/v.videoWidth),c=document.createElement("canvas");
     c.width=w;c.height=h;c.getContext("2d").drawImage(v,0,0,w,h);
     var it=items[cur];it.thumb=c.toDataURL("image/jpeg",0.6);it.tv=3;put(it);render();
-    cap.textContent="Salvata";setTimeout(function(){cap.textContent="Anteprima";},1200);
+    cap.textContent="Salvata";setTimeout(function(){cap.textContent="Scegli miniatura";},1200);
   }catch(e){}
 });
 
