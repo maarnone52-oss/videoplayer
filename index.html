@@ -175,12 +175,13 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 <button class="btn sec" id="ap" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"/><polygon points="12 15 17 21 7 21 12 15" fill="currentColor" stroke="none"/></svg><span>AirPlay</span></button>
 <label class="btn"><input type="file" id="file" accept="video/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Video</span></label>
 <label class="btn"><input type="file" id="filep" accept="image/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Foto</span></label>
-<label class="btn"><input type="file" id="filea" accept="audio/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Audio</span></label>
+<label class="btn" title="Importa file audio nei vari formati (MP3, M4A, WAV, AAC, OGG, FLAC, ecc.)"><input type="file" id="filea" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.flac,.opus,.wma,.aiff,.aif,.caf,.alac,.amr,.3ga,.weba,.mka" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Audio</span></label>
+<label class="btn" title="Carica un video ed estrae solo la sua traccia audio"><input type="file" id="fileva" accept="video/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Audio da video</span></label>
 </header>
 <div id="prj"><select id="psel" aria-label="Progetto"></select><button id="pnew" type="button">Nuovo</button><button id="pren" type="button">Rinomina</button><button id="pdel" type="button">Elimina</button></div>
 <div id="pedit" hidden><input id="pname" maxlength="40" placeholder="Nome del progetto"><button id="pok" type="button">OK</button><button id="pno" type="button">Annulla</button></div>
 <div id="imp" hidden><div id="impt"></div><div id="impb"><div id="impf"></div></div></div>
-<div id="stage"><video id="v" playsinline></video><img id="ph" alt="" hidden><div id="audvis" hidden><div class="av-ico">🎵</div><div class="av-nm" id="audnm"></div></div><div id="wait"></div></div>
+<div id="stage"><video id="v" playsinline></video><img id="ph" alt="" hidden><div id="audvis" hidden><div class="av-ico" id="audico">🎵</div><div class="av-nm" id="audnm"></div><div id="audsub" style="font-size:11px;opacity:.68;margin-top:2px" hidden>Traccia audio estratta da video</div></div><div id="wait"></div></div>
 <div id="prog" aria-label="Avanzamento"><div id="pf"></div></div>
 <div id="bar"><span id="now">Nessun video in riproduzione</span><span id="tm">0:00 / 0:00</span><button id="mu" type="button" aria-label="Audio">🔊</button></div>
 <div id="ctl"><button id="pp" type="button">Pausa</button><button id="cont" type="button" title="Riproduzione continua senza sosta">Senza sosta: Off</button><button id="pdur" type="button" title="Durata foto">Durata foto: ∞</button><button id="cap" type="button">Scegli miniatura</button><button id="delcur" type="button" aria-label="Elimina selezionato o trascina qui per eliminare" title="Elimina selezionato o trascina qui" disabled>🗑️</button></div>
@@ -212,7 +213,7 @@ document.addEventListener("touchend",function(e){
 },{passive:false});
 document.addEventListener("wheel",function(e){if(e.ctrlKey||e.metaKey)e.preventDefault();},{passive:false});
 
-var list=document.getElementById("list"),v=document.getElementById("v"),now=document.getElementById("now"),inp=document.getElementById("file"),prog=document.getElementById("prog"),pf=document.getElementById("pf"),tm=document.getElementById("tm"),go=document.getElementById("go"),wait=document.getElementById("wait"),cap=document.getElementById("cap"),pp=document.getElementById("pp"),ph=document.getElementById("ph"),audvis=document.getElementById("audvis"),audnm=document.getElementById("audnm"),ap=document.getElementById("ap"),pdur=document.getElementById("pdur"),cont=document.getElementById("cont"),delcur=document.getElementById("delcur"),stage=document.getElementById("stage");
+var list=document.getElementById("list"),v=document.getElementById("v"),now=document.getElementById("now"),inp=document.getElementById("file"),prog=document.getElementById("prog"),pf=document.getElementById("pf"),tm=document.getElementById("tm"),go=document.getElementById("go"),wait=document.getElementById("wait"),cap=document.getElementById("cap"),pp=document.getElementById("pp"),ph=document.getElementById("ph"),audvis=document.getElementById("audvis"),audico=document.getElementById("audico"),audnm=document.getElementById("audnm"),audsub=document.getElementById("audsub"),ap=document.getElementById("ap"),pdur=document.getElementById("pdur"),cont=document.getElementById("cont"),delcur=document.getElementById("delcur"),stage=document.getElementById("stage");
 var items=[],cur=-1,db=null,queue=[],busy=false,pendingOrder=false,imp={t:0,d:0},projs=[],pid="p1";
 var accord=document.getElementById("accord");
 var photoDurs=[0,3,5,8],photoDurIdx=0,photoTimer=null,photoPaused=false,photoElapsed=0,photoStart=0;
@@ -391,7 +392,7 @@ function pump(){
   if(busy||!queue.length)return;
   busy=true;
   var it=queue.shift();
-  var fn=it.kind==="photo"?photoThumb:(it.kind==="audio"?audioThumb:makeThumb);
+  var fn=it.kind==="photo"?photoThumb:((it.kind==="audio"||it.kind==="videoaudio")?audioThumb:makeThumb);
   fn(it,function(d){it.thumb=d;it.tv=3;if(!it.gone)put(it);if(it.cnt){it.cnt=false;step();}busy=false;render();pump();});
 }
 
@@ -402,7 +403,7 @@ function render(){
   list.innerHTML="";
   if(!items.length){
     var h=document.createElement("div");h.className="hint";
-    h.textContent="Nessun elemento. Usa “+ Video”, “+ Foto” o “+ Audio” per aggiungerne.";
+    h.textContent="Nessun elemento. Usa “+ Video”, “+ Foto”, “+ Audio” o “+ Audio da video” per aggiungerne.";
     list.appendChild(h);return;
   }
   items.forEach(function(it,i){
@@ -410,7 +411,7 @@ function render(){
     var th=document.createElement("div");th.className="th";
     if(it.thumb)th.style.backgroundImage="url("+it.thumb+")";
     if(!it.thumb){var hh=0;for(var q=0;q<it.name.length;q++)hh=(hh*31+it.name.charCodeAt(q))%360;th.style.backgroundColor="hsl("+hh+",35%,32%)";}
-    th.textContent=it.kind==="photo"?(it.thumb?"":"🖼"):(it.kind==="audio"?"🎵":"▶");
+    th.textContent=it.kind==="photo"?(it.thumb?"":"🖼"):(it.kind==="videoaudio"?"🎬🎵":(it.kind==="audio"?"🎵":"▶"));
     var nm=document.createElement("div");nm.className="nm";nm.textContent=it.name;
     t.onclick=function(){if(!justDragged)play(i);};
     t.appendChild(th);t.appendChild(nm);
@@ -429,9 +430,13 @@ function play(i){
     audvis.hidden=true;
     ph.src=items[i].url;ph.hidden=false;
     startPhotoMode();
-  }else if(items[i].kind==="audio"){
+  }else if(items[i].kind==="audio"||items[i].kind==="videoaudio"){
     ph.hidden=true;ph.removeAttribute("src");v.hidden=true;
-    audnm.textContent=items[i].name;audvis.hidden=false;pp.disabled=false;
+    var isVA=items[i].kind==="videoaudio";
+    audico.textContent=isVA?"🎬🎵":"🎵";
+    audnm.textContent=items[i].name;
+    audsub.hidden=!isVA;
+    audvis.hidden=false;pp.disabled=false;
     v.src=items[i].url;
     var pa=v.play();if(pa&&pa.catch)pa.catch(function(){});
   }else{
@@ -546,6 +551,8 @@ var inpp=document.getElementById("filep");
 inpp.addEventListener("change",function(){addFiles(inpp,"photo");});
 var inpa=document.getElementById("filea");
 inpa.addEventListener("change",function(){addFiles(inpa,"audio");});
+var inpva=document.getElementById("fileva");
+inpva.addEventListener("change",function(){addFiles(inpva,"videoaudio");});
 
 function showImp(){
   var e=document.getElementById("imp");
