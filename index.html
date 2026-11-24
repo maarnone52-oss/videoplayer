@@ -112,6 +112,12 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 .nm{padding:5px 7px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .hint{grid-column:1/-1;color:var(--mut);text-align:center;padding:24px 10px}
 
+#regia.on{background:#16a34a;color:#fff;border-color:#16a34a;box-shadow:0 0 0 2px rgba(22,163,74,.35)}
+body.fs-stage #stage{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-height:none!important;margin:0!important;border-radius:0!important;border:0!important;z-index:999!important;background:#000!important}
+#fsexit{display:none;position:fixed;top:max(env(safe-area-inset-top,0px),14px);right:14px;z-index:1005;background:rgba(20,20,24,.72);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:7px 14px;font-size:13px;font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;touch-action:manipulation}
+body.fs-stage #fsexit{display:inline-flex;align-items:center;gap:6px}
+#vout{position:fixed;left:0;top:0;width:2px;height:2px;opacity:0.01;pointer-events:none;z-index:1}
+
 /* Adattamento nativo a due colonne in orientamento orizzontale (landscape) con finestra video 16:9 bilanciata */
 @media screen and (orientation:landscape) and (max-height:600px){
   body{
@@ -154,7 +160,7 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
   #ztrack{max-height:none;height:82%}
   #zthumb{width:24px;height:24px}
   #ctl{grid-area:ctl;padding:4px 2px 0;align-items:center;flex-wrap:wrap;gap:4px}
-  #delcur,#pp,#cap,#pdur,#cont{height:30px;padding:0 7px;font-size:11px;border-radius:8px}
+  #delcur,#pp,#cap,#pdur,#cont,#fsbtn{height:30px!important;padding:0 7px!important;font-size:11px!important;border-radius:8px!important}
   #delcur{padding:0 9px;font-size:14px}
   #pp{min-width:56px;font-size:12.5px}
   #foot{grid-area:foot;padding:6px 2px 0;display:flex;align-items:center;justify-content:center}
@@ -172,6 +178,7 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 <button class="btn sec" id="und" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span id="undt">Annulla</span></button>
 <button class="btn sec" id="thm" type="button" title="Cambia tema sfondo">Sfondo: Nero</button>
 <label class="btn sec" id="bgpick" title="Scegli foto di sfondo dalla libreria"><input type="file" id="bgfile" accept="image/*" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><path d="M21 15l-5-5L5 21"/></svg><span>Foto sfondo</span></label>
+<button class="btn sec" id="regia" type="button" title="Attiva uscita video continua 16:9 per HDMI / Schermo esterno"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span id="regiat">Uscita Regia</span></button>
 <button class="btn sec" id="ap" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"/><polygon points="12 15 17 21 7 21 12 15" fill="currentColor" stroke="none"/></svg><span>AirPlay</span></button>
 <label class="btn"><input type="file" id="file" accept="video/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Video</span></label>
 <label class="btn"><input type="file" id="filep" accept="image/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Foto</span></label>
@@ -181,10 +188,10 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 <div id="prj"><select id="psel" aria-label="Progetto"></select><button id="pnew" type="button">Nuovo</button><button id="pren" type="button">Rinomina</button><button id="pdel" type="button">Elimina</button></div>
 <div id="pedit" hidden><input id="pname" maxlength="40" placeholder="Nome del progetto"><button id="pok" type="button">OK</button><button id="pno" type="button">Annulla</button></div>
 <div id="imp" hidden><div id="impt"></div><div id="impb"><div id="impf"></div></div></div>
-<div id="stage"><video id="v" playsinline></video><img id="ph" alt="" hidden><div id="audvis" hidden><div class="av-ico" id="audico">🎵</div><div class="av-nm" id="audnm"></div><div id="audsub" style="font-size:11px;opacity:.68;margin-top:2px" hidden>Traccia audio estratta da video</div></div><div id="wait"></div></div>
+<video id="vout" playsinline muted></video><button id="fsexit" type="button">✕ Esci da schermo intero</button><div id="stage"><video id="v" playsinline></video><img id="ph" alt="" hidden><div id="audvis" hidden><div class="av-ico" id="audico">🎵</div><div class="av-nm" id="audnm"></div><div id="audsub" style="font-size:11px;opacity:.68;margin-top:2px" hidden>Traccia audio estratta da video</div></div><div id="wait"></div></div>
 <div id="prog" aria-label="Avanzamento"><div id="pf"></div></div>
 <div id="bar"><span id="now">Nessun video in riproduzione</span><span id="tm">0:00 / 0:00</span><button id="mu" type="button" aria-label="Audio">🔊</button></div>
-<div id="ctl"><button id="pp" type="button">Pausa</button><button id="cont" type="button" title="Riproduzione continua senza sosta">Senza sosta: Off</button><button id="pdur" type="button" title="Durata foto">Durata foto: ∞</button><button id="cap" type="button">Scegli miniatura</button><button id="delcur" type="button" aria-label="Elimina selezionato o trascina qui per eliminare" title="Elimina selezionato o trascina qui" disabled>🗑️</button></div>
+<div id="ctl"><button id="pp" type="button">Pausa</button><button id="cont" type="button" title="Riproduzione continua senza sosta">Senza sosta: Off</button><button id="pdur" type="button" title="Durata foto">Durata foto: ∞</button><button id="cap" type="button">Scegli miniatura</button><button id="fsbtn" type="button" title="Espandi il quadro di riproduzione a schermo intero" style="border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:9px;padding:0 10px;font-size:12px;font-family:inherit;height:38px;touch-action:manipulation;font-weight:600">⛶ Schermo intero</button><button id="delcur" type="button" aria-label="Elimina selezionato o trascina qui per eliminare" title="Elimina selezionato o trascina qui" disabled>🗑️</button></div>
 <div id="listwrap">
   <div id="list"></div>
   <div id="zrail" role="slider" aria-label="Dimensione miniature" aria-valuemin="60" aria-valuemax="260" aria-valuenow="130" tabindex="0">
@@ -826,6 +833,91 @@ if(bgfile)bgfile.addEventListener("change",function(){
   setBgPhotoBlob(f);
   saveBgPhotoDB(f);
 });
+
+// === USCITA REGIA DEDICATA (FLUSSO CONTINUO 16:9 PER HDMI / SCHERMO ESTERNO) ===
+var regiaBtn=document.getElementById("regia"),regiat=document.getElementById("regiat"),vout=document.getElementById("vout");
+var fsBtn=document.getElementById("fsbtn"),fsExit=document.getElementById("fsexit");
+var regiaOn=false,regiaCanvas=null,regiaCtx=null,regiaRaf=null,regiaStream=null;
+
+function toggleStageFs(force){
+  var next=(typeof force==="boolean")?force:!document.body.classList.contains("fs-stage");
+  document.body.classList.toggle("fs-stage",next);
+}
+if(fsBtn)fsBtn.addEventListener("click",function(){toggleStageFs(true);});
+if(fsExit)fsExit.addEventListener("click",function(){toggleStageFs(false);});
+stage.addEventListener("dblclick",function(){toggleStageFs();});
+
+function drawContain(ctx,srcEl,sw,sh,cw,ch){
+  if(!sw||!sh)return;
+  var scale=Math.min(cw/sw,ch/sh);
+  var dw=Math.round(sw*scale),dh=Math.round(sh*scale);
+  var dx=Math.round((cw-dw)/2),dy=Math.round((ch-dh)/2);
+  ctx.drawImage(srcEl,dx,dy,dw,dh);
+}
+
+function renderRegiaFrame(){
+  if(!regiaOn||!regiaCtx)return;
+  var cw=regiaCanvas.width,ch=regiaCanvas.height;
+  regiaCtx.fillStyle="#000000";
+  regiaCtx.fillRect(0,0,cw,ch);
+  var isWaiting=wait.classList.contains("on");
+  if(!isWaiting&&cur>=0&&items[cur]){
+    var kind=items[cur].kind||"video";
+    if(kind==="video"&&!v.hidden&&v.readyState>=2&&v.videoWidth>0){
+      drawContain(regiaCtx,v,v.videoWidth,v.videoHeight,cw,ch);
+    }else if(kind==="photo"&&!ph.hidden&&ph.complete&&ph.naturalWidth>0){
+      drawContain(regiaCtx,ph,ph.naturalWidth,ph.naturalHeight,cw,ch);
+    }
+    // Per audio / videoaudio / attesa (#wait), lo schermo esterno resta su nero pulito (#000000)
+  }
+  regiaRaf=requestAnimationFrame(renderRegiaFrame);
+}
+
+function startRegiaOut(){
+  try{
+    if(!regiaCanvas){
+      regiaCanvas=document.createElement("canvas");
+      regiaCanvas.width=1280;
+      regiaCanvas.height=720;
+      regiaCtx=regiaCanvas.getContext("2d",{alpha:false});
+    }
+    regiaOn=true;
+    regiaBtn.classList.add("on");
+    if(regiat)regiat.textContent="Regia: ON";
+    renderRegiaFrame();
+    if(!regiaStream&&regiaCanvas.captureStream){
+      regiaStream=regiaCanvas.captureStream(30);
+    }
+    if(regiaStream){
+      vout.srcObject=regiaStream;
+      var p=vout.play();
+      if(p&&p.catch)p.catch(function(){});
+      // Se disponibile AirPlay / External Playback target picker su iOS, permette anche selezione diretta
+      if(vout.webkitShowPlaybackTargetPicker){
+        try{vout.webkitShowPlaybackTargetPicker();}catch(e){}
+      }
+    }
+  }catch(e){
+    stopRegiaOut();
+  }
+}
+
+function stopRegiaOut(){
+  regiaOn=false;
+  if(regiaRaf){cancelAnimationFrame(regiaRaf);regiaRaf=null;}
+  regiaBtn.classList.remove("on");
+  if(regiat)regiat.textContent="Uscita Regia";
+  try{
+    vout.pause();
+    vout.srcObject=null;
+  }catch(e){}
+}
+
+if(regiaBtn)regiaBtn.addEventListener("click",function(){
+  if(regiaOn)stopRegiaOut();
+  else startRegiaOut();
+});
+
 fillProj();openDB(function(){loadBgPhotoDB();loadAll();});
 })();
 </script>
