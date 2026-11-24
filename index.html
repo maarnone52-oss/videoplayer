@@ -116,7 +116,10 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 body.fs-stage #stage{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-height:none!important;margin:0!important;border-radius:0!important;border:0!important;z-index:999!important;background:#000!important}
 #fsexit{display:none;position:fixed;top:max(env(safe-area-inset-top,0px),14px);right:14px;z-index:1005;background:rgba(20,20,24,.72);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:7px 14px;font-size:13px;font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;touch-action:manipulation}
 body.fs-stage #fsexit{display:inline-flex;align-items:center;gap:6px}
-#vout{position:fixed;left:0;top:0;width:2px;height:2px;opacity:0.01;pointer-events:none;z-index:1}
+#vout{position:fixed;right:10px;bottom:10px;width:160px;height:90px;background:#000;border:2px solid #16a34a;border-radius:8px;z-index:90;box-shadow:0 4px 16px rgba(0,0,0,.6);pointer-events:auto;display:none}
+#vout.on{display:block}
+#hdmifull{display:none}
+#hdmifull.on{display:inline-flex}
 
 /* Adattamento nativo a due colonne in orientamento orizzontale (landscape) con finestra video 16:9 bilanciata */
 @media screen and (orientation:landscape) and (max-height:600px){
@@ -179,6 +182,7 @@ body.fs-stage #fsexit{display:inline-flex;align-items:center;gap:6px}
 <button class="btn sec" id="thm" type="button" title="Cambia tema sfondo">Sfondo: Nero</button>
 <label class="btn sec" id="bgpick" title="Scegli foto di sfondo dalla libreria"><input type="file" id="bgfile" accept="image/*" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><path d="M21 15l-5-5L5 21"/></svg><span>Foto sfondo</span></label>
 <button class="btn sec" id="regia" type="button" title="Attiva uscita video continua 16:9 per HDMI / Schermo esterno"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span id="regiat">Uscita Regia</span></button>
+<button class="btn" id="hdmifull" type="button" title="Manda il flusso Regia 16:9 a tutto schermo nativo su HDMI"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg><span>HDMI Full</span></button>
 <button class="btn sec" id="ap" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"/><polygon points="12 15 17 21 7 21 12 15" fill="currentColor" stroke="none"/></svg><span>AirPlay</span></button>
 <label class="btn"><input type="file" id="file" accept="video/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Video</span></label>
 <label class="btn"><input type="file" id="filep" accept="image/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Foto</span></label>
@@ -834,8 +838,8 @@ if(bgfile)bgfile.addEventListener("change",function(){
   saveBgPhotoDB(f);
 });
 
-// === USCITA REGIA DEDICATA (FLUSSO CONTINUO 16:9 PER HDMI / SCHERMO ESTERNO) ===
-var regiaBtn=document.getElementById("regia"),regiat=document.getElementById("regiat"),vout=document.getElementById("vout");
+// === USCITA REGIA DEDICATA (FLUSSO CONTINUO 16:9 PER HDMI USB-C / AIRPLAY / PiP) ===
+var regiaBtn=document.getElementById("regia"),regiat=document.getElementById("regiat"),vout=document.getElementById("vout"),hdmiFullBtn=document.getElementById("hdmifull");
 var fsBtn=document.getElementById("fsbtn"),fsExit=document.getElementById("fsexit");
 var regiaOn=false,regiaCanvas=null,regiaCtx=null,regiaRaf=null,regiaStream=null;
 
@@ -873,6 +877,28 @@ function renderRegiaFrame(){
   regiaRaf=requestAnimationFrame(renderRegiaFrame);
 }
 
+function enterNativeHdmiOutput(){
+  if(!vout)return;
+  try{
+    // Su iOS Safari con cavo USB-C -> HDMI: Picture-in-Picture o Native Fullscreen invia il solo flusso video 16:9 al monitor HDMI
+    if(vout.webkitSupportsPresentationMode&&typeof vout.webkitSetPresentationMode==="function"){
+      vout.webkitSetPresentationMode("picture-in-picture");
+      return;
+    }
+    if(document.pictureInPictureEnabled&&vout.requestPictureInPicture){
+      vout.requestPictureInPicture().catch(function(){
+        if(vout.webkitEnterFullscreen)try{vout.webkitEnterFullscreen();}catch(e){}
+      });
+      return;
+    }
+    if(vout.webkitEnterFullscreen){
+      vout.webkitEnterFullscreen();
+    }
+  }catch(e){
+    if(vout.webkitEnterFullscreen)try{vout.webkitEnterFullscreen();}catch(err){}
+  }
+}
+
 function startRegiaOut(){
   try{
     if(!regiaCanvas){
@@ -883,6 +909,8 @@ function startRegiaOut(){
     }
     regiaOn=true;
     regiaBtn.classList.add("on");
+    vout.classList.add("on");
+    if(hdmiFullBtn)hdmiFullBtn.classList.add("on");
     if(regiat)regiat.textContent="Regia: ON";
     renderRegiaFrame();
     if(!regiaStream&&regiaCanvas.captureStream){
@@ -891,10 +919,12 @@ function startRegiaOut(){
     if(regiaStream){
       vout.srcObject=regiaStream;
       var p=vout.play();
-      if(p&&p.catch)p.catch(function(){});
-      // Se disponibile AirPlay / External Playback target picker su iOS, permette anche selezione diretta
-      if(vout.webkitShowPlaybackTargetPicker){
-        try{vout.webkitShowPlaybackTargetPicker();}catch(e){}
+      if(p&&p.then){
+        p.then(function(){
+          enterNativeHdmiOutput();
+        }).catch(function(){});
+      }else{
+        enterNativeHdmiOutput();
       }
     }
   }catch(e){
@@ -906,8 +936,16 @@ function stopRegiaOut(){
   regiaOn=false;
   if(regiaRaf){cancelAnimationFrame(regiaRaf);regiaRaf=null;}
   regiaBtn.classList.remove("on");
+  vout.classList.remove("on");
+  if(hdmiFullBtn)hdmiFullBtn.classList.remove("on");
   if(regiat)regiat.textContent="Uscita Regia";
   try{
+    if(vout.webkitPresentationMode==="picture-in-picture"&&vout.webkitSetPresentationMode){
+      vout.webkitSetPresentationMode("inline");
+    }
+    if(document.pictureInPictureElement===vout&&document.exitPictureInPicture){
+      document.exitPictureInPicture().catch(function(){});
+    }
     vout.pause();
     vout.srcObject=null;
   }catch(e){}
@@ -916,6 +954,19 @@ function stopRegiaOut(){
 if(regiaBtn)regiaBtn.addEventListener("click",function(){
   if(regiaOn)stopRegiaOut();
   else startRegiaOut();
+});
+if(hdmiFullBtn)hdmiFullBtn.addEventListener("click",function(){
+  if(!regiaOn)startRegiaOut();
+  if(vout.webkitEnterFullscreen){
+    try{vout.webkitEnterFullscreen();}catch(e){}
+  }else{
+    enterNativeHdmiOutput();
+  }
+});
+vout.addEventListener("click",function(){
+  if(vout.webkitEnterFullscreen){
+    try{vout.webkitEnterFullscreen();}catch(e){}
+  }
 });
 
 fillProj();openDB(function(){loadBgPhotoDB();loadAll();});
