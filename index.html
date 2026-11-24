@@ -363,8 +363,7 @@ function makeThumb(it,cb){
     next();
   }
   t.onloadedmetadata=function(){
-    var p;try{p=t.play();}catch(e){}
-    if(p&&p.then)p.then(function(){t.pause();start();},function(){start();});else start();
+    start();
   };
   t.onseeked=function(){
     var ok=false;
@@ -478,7 +477,7 @@ function enterNativeExternalFullscreen(videoEl){
       return true;
     }
   }catch(e){
-    showHdmiBanner("Safari richiede un tocco su "Apri su TV" per avviare il player esterno HDMI.");
+    showHdmiBanner("Safari richiede un tocco su \"Apri su TV\" per avviare il player esterno HDMI.");
   }
   return false;
 }
@@ -501,7 +500,7 @@ function exitNativeExternalFullscreen(videoEl){
   el.addEventListener("webkitendfullscreen",function(){
     if(activeExternalVideo===el)activeExternalVideo=null;
     if(hdmiOn){
-      showHdmiBanner("Player HDMI chiuso. Tocca "Apri su TV" per rimandare il video sul monitor esterno.");
+      showHdmiBanner("Player HDMI chiuso. Tocca \"Apri su TV\" per rimandare il video sul monitor esterno.");
     }
   });
   el.addEventListener("webkitbeginfullscreen",function(){
@@ -1077,7 +1076,7 @@ function startHdmiOut(){
   if(hdmit)hdmit.textContent="HDMI: ON";
   if(cur>=0&&items[cur]&&(items[cur].kind||"video")==="video"&&!wait.classList.contains("on")){
     var ok=enterNativeExternalFullscreen(v);
-    if(!ok)showHdmiBanner("Tocca "Apri su TV" per inviare il video puro al monitor HDMI senza clonare l'iPhone.");
+    if(!ok)showHdmiBanner("Tocca \"Apri su TV\" per inviare il video puro al monitor HDMI senza clonare l'iPhone.");
   }else{
     syncHdmiState();
   }
