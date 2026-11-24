@@ -113,10 +113,13 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 
 #hdmiout{background:#2563eb;color:#fff;border:0}
 #hdmiout.on{background:#16a34a;color:#fff;box-shadow:0 0 0 2px rgba(22,163,74,.4)}
+#hdminote{display:none;margin:0 10px 5px;padding:7px 10px;border-radius:9px;background:rgba(37,99,235,.18);border:1px solid rgba(96,165,250,.45);color:var(--fg);font-size:12px;line-height:1.35;align-items:center;justify-content:space-between;gap:8px;z-index:25}
+#hdminote.on{display:flex}
+#hdminote button{flex:none;background:var(--acc);color:#fff;border:0;border-radius:7px;padding:5px 9px;font-size:11.5px;font-weight:700;cursor:pointer}
 body.fs-stage #stage{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-height:none!important;margin:0!important;border-radius:0!important;border:0!important;z-index:999!important;background:#000!important}
 #fsexit{display:none;position:fixed;top:max(env(safe-area-inset-top,0px),14px);right:14px;z-index:1005;background:rgba(20,20,24,.72);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:7px 14px;font-size:13px;font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;touch-action:manipulation}
 body.fs-stage #fsexit{display:inline-flex;align-items:center;gap:6px}
-#vout{position:fixed;left:-9999px;top:0;width:320px;height:180px;opacity:0.01;pointer-events:none}
+#vout{position:fixed;left:0;top:0;width:2px;height:2px;opacity:0.01;pointer-events:none;z-index:1}
 
 @media screen and (orientation:landscape) and (max-height:600px){
   body{
@@ -183,10 +186,11 @@ body.fs-stage #fsexit{display:inline-flex;align-items:center;gap:6px}
 <label class="btn" title="Importa file audio nei vari formati (MP3, M4A, WAV, AAC, OGG, FLAC, ecc.)"><input type="file" id="filea" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg,.flac,.opus,.wma,.aiff,.aif,.caf,.alac,.amr,.3ga,.weba,.mka" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Audio</span></label>
 <label class="btn" title="Carica un video ed estrae solo la sua traccia audio"><input type="file" id="fileva" accept="video/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Audio da video</span></label>
 </header>
+<div id="hdminote"><span id="hdminotetxt">Tocca "Apri su TV" per inviare il video puro al monitor HDMI senza clonare l'iPhone.</span><button id="hdmiforce" type="button">Apri su TV</button></div>
 <div id="prj"><select id="psel" aria-label="Progetto"></select><button id="pnew" type="button">Nuovo</button><button id="pren" type="button">Rinomina</button><button id="pdel" type="button">Elimina</button></div>
 <div id="pedit" hidden><input id="pname" maxlength="40" placeholder="Nome del progetto"><button id="pok" type="button">OK</button><button id="pno" type="button">Annulla</button></div>
 <div id="imp" hidden><div id="impt"></div><div id="impb"><div id="impf"></div></div></div>
-<video id="vout" playsinline x-webkit-airplay="allow"></video><button id="fsexit" type="button">✕ Esci da schermo intero</button><div id="stage"><video id="v" playsinline x-webkit-airplay="allow"></video><img id="ph" alt="" hidden><div id="audvis" hidden><div class="av-ico" id="audico">🎵</div><div class="av-nm" id="audnm"></div><div id="audsub" style="font-size:11px;opacity:.68;margin-top:2px" hidden>Traccia audio estratta da video</div></div><div id="wait"></div></div>
+<video id="vout" playsinline webkit-playsinline x-webkit-airplay="allow"></video><button id="fsexit" type="button">✕ Esci da schermo intero</button><div id="stage"><video id="v" playsinline webkit-playsinline x-webkit-airplay="allow"></video><img id="ph" alt="" hidden><div id="audvis" hidden><div class="av-ico" id="audico">🎵</div><div class="av-nm" id="audnm"></div><div id="audsub" style="font-size:11px;opacity:.68;margin-top:2px" hidden>Traccia audio estratta da video</div></div><div id="wait"></div></div>
 <div id="prog" aria-label="Avanzamento"><div id="pf"></div></div>
 <div id="bar"><span id="now">Nessun video in riproduzione</span><span id="tm">0:00 / 0:00</span><button id="mu" type="button" aria-label="Audio">🔊</button></div>
 <div id="ctl"><button id="pp" type="button">Pausa</button><button id="cont" type="button" title="Riproduzione continua senza sosta">Senza sosta: Off</button><button id="pdur" type="button" title="Durata foto">Durata foto: ∞</button><button id="cap" type="button">Scegli miniatura</button><button id="fsbtn" type="button" title="Espandi il quadro di riproduzione a schermo intero" style="border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:9px;padding:0 10px;font-size:12px;font-family:inherit;height:38px;touch-action:manipulation;font-weight:600">⛶ Schermo intero</button><button id="delcur" type="button" aria-label="Elimina selezionato o trascina qui per eliminare" title="Elimina selezionato o trascina qui" disabled>🗑️</button></div>
@@ -424,8 +428,88 @@ function render(){
   });
 }
 
-// === GENERATORE MP4/VIDEO NATIVO PER FOTO E SCHERMO NERO SU HDMI ===
+// === USCITA HDMI NATIVA IOS (AVPLAYER FULLSCREEN SENZA CLONAZIONE SCHERMO IPHONE) ===
+var hdmiNote=document.getElementById("hdminote"),hdmiNoteTxt=document.getElementById("hdminotetxt"),hdmiForceBtn=document.getElementById("hdmiforce");
+var activeExternalVideo=null;
 var cachedBlackBlobUrl="";
+
+function showHdmiBanner(msg){
+  if(!hdmiNote)return;
+  if(hdmiNoteTxt&&msg)hdmiNoteTxt.textContent=msg;
+  hdmiNote.classList.add("on");
+}
+function hideHdmiBanner(){
+  if(hdmiNote)hdmiNote.classList.remove("on");
+}
+
+function isVideoInExternalFullscreen(videoEl){
+  if(!videoEl)return false;
+  try{
+    if(videoEl.webkitDisplayingFullscreen)return true;
+    if(videoEl.webkitPresentationMode==="fullscreen")return true;
+    if(document.fullscreenElement===videoEl||document.webkitFullscreenElement===videoEl)return true;
+  }catch(e){}
+  return false;
+}
+
+function enterNativeExternalFullscreen(videoEl){
+  if(!hdmiOn||!videoEl)return false;
+  try{
+    if(isVideoInExternalFullscreen(videoEl)){
+      activeExternalVideo=videoEl;
+      hideHdmiBanner();
+      return true;
+    }
+    if(typeof videoEl.webkitEnterFullscreen==="function"){
+      videoEl.webkitEnterFullscreen();
+      activeExternalVideo=videoEl;
+      hideHdmiBanner();
+      return true;
+    }
+    if(videoEl.webkitSupportsPresentationMode&&typeof videoEl.webkitSetPresentationMode==="function"){
+      videoEl.webkitSetPresentationMode("fullscreen");
+      activeExternalVideo=videoEl;
+      hideHdmiBanner();
+      return true;
+    }
+    if(typeof videoEl.requestFullscreen==="function"){
+      videoEl.requestFullscreen().catch(function(){});
+      activeExternalVideo=videoEl;
+      return true;
+    }
+  }catch(e){
+    showHdmiBanner("Safari richiede un tocco su "Apri su TV" per avviare il player esterno HDMI.");
+  }
+  return false;
+}
+
+function exitNativeExternalFullscreen(videoEl){
+  try{
+    if(!videoEl)return;
+    if(typeof videoEl.webkitExitFullscreen==="function"&&videoEl.webkitDisplayingFullscreen){
+      videoEl.webkitExitFullscreen();
+    }else if(videoEl.webkitSupportsPresentationMode&&videoEl.webkitPresentationMode==="fullscreen"){
+      videoEl.webkitSetPresentationMode("inline");
+    }else if(document.fullscreenElement===videoEl){
+      document.exitFullscreen().catch(function(){});
+    }
+  }catch(e){}
+  if(activeExternalVideo===videoEl)activeExternalVideo=null;
+}
+
+[v,vout].forEach(function(el){
+  el.addEventListener("webkitendfullscreen",function(){
+    if(activeExternalVideo===el)activeExternalVideo=null;
+    if(hdmiOn){
+      showHdmiBanner("Player HDMI chiuso. Tocca "Apri su TV" per rimandare il video sul monitor esterno.");
+    }
+  });
+  el.addEventListener("webkitbeginfullscreen",function(){
+    activeExternalVideo=el;
+    hideHdmiBanner();
+  });
+});
+
 function buildSolidVideoBlobUrl(imgEl,durSec,cb){
   try{
     var c=document.createElement("canvas");
@@ -482,7 +566,7 @@ function sendBlackToHdmi(){
     vout.srcObject=null;
     vout.src=bUrl;
     var p=vout.play();
-    if(p&&p.then)p.then(function(){activateExternalPip(vout);},function(){});
+    if(p&&p.then)p.then(function(){enterNativeExternalFullscreen(vout);},function(){});
   }
   if(cachedBlackBlobUrl){applyBlack(cachedBlackBlobUrl);return;}
   buildSolidVideoBlobUrl(null,1.0,function(bUrl){
@@ -499,7 +583,7 @@ function sendPhotoToHdmi(it){
     vout.srcObject=null;
     vout.src=it._hdmiVideoUrl;
     var p=vout.play();
-    if(p&&p.then)p.then(function(){activateExternalPip(vout);},function(){});
+    if(p&&p.then)p.then(function(){enterNativeExternalFullscreen(vout);},function(){});
     return;
   }
   var im=new Image();
@@ -512,66 +596,50 @@ function sendPhotoToHdmi(it){
       vout.srcObject=null;
       vout.src=bUrl;
       var p=vout.play();
-      if(p&&p.then)p.then(function(){activateExternalPip(vout);},function(){});
+      if(p&&p.then)p.then(function(){enterNativeExternalFullscreen(vout);},function(){});
     });
   };
   im.src=it.url;
-}
-
-function activateExternalPip(videoEl){
-  if(!hdmiOn||!videoEl)return;
-  try{
-    if(videoEl.webkitSupportsPresentationMode&&typeof videoEl.webkitSetPresentationMode==="function"){
-      if(videoEl.webkitPresentationMode!=="picture-in-picture"){
-        videoEl.webkitSetPresentationMode("picture-in-picture");
-      }
-    }else if(document.pictureInPictureEnabled&&!videoEl.disablePictureInPicture&&document.pictureInPictureElement!==videoEl){
-      videoEl.requestPictureInPicture().catch(function(){});
-    }
-  }catch(e){}
-}
-
-function releaseExternalPip(videoEl){
-  try{
-    if(videoEl&&videoEl.webkitSupportsPresentationMode&&typeof videoEl.webkitSetPresentationMode==="function"){
-      if(videoEl.webkitPresentationMode==="picture-in-picture"){
-        videoEl.webkitSetPresentationMode("inline");
-      }
-    }else if(document.pictureInPictureElement===videoEl){
-      document.exitPictureInPicture().catch(function(){});
-    }
-  }catch(e){}
 }
 
 function syncHdmiState(){
   if(!hdmiOn)return;
   var isWaiting=wait.classList.contains("on");
   if(isWaiting||cur<0||!items[cur]){
-    releaseExternalPip(v);
+    exitNativeExternalFullscreen(v);
     sendBlackToHdmi();
     return;
   }
   var it=items[cur];
   var kind=it.kind||"video";
   if(kind==="video"){
-    releaseExternalPip(vout);
+    exitNativeExternalFullscreen(vout);
     vout.pause();
     if(v.readyState>=1){
-      activateExternalPip(v);
+      enterNativeExternalFullscreen(v);
     }else{
       v.addEventListener("loadedmetadata",function onMeta(){
         v.removeEventListener("loadedmetadata",onMeta);
-        activateExternalPip(v);
+        enterNativeExternalFullscreen(v);
       });
     }
   }else if(kind==="photo"){
-    releaseExternalPip(v);
+    exitNativeExternalFullscreen(v);
     sendPhotoToHdmi(it);
   }else{
-    releaseExternalPip(v);
+    exitNativeExternalFullscreen(v);
     sendBlackToHdmi();
   }
 }
+
+if(hdmiForceBtn)hdmiForceBtn.addEventListener("click",function(){
+  if(!hdmiOn){startHdmiOut();return;}
+  if(cur>=0&&items[cur]&&(items[cur].kind||"video")==="video"&&!wait.classList.contains("on")){
+    enterNativeExternalFullscreen(v);
+  }else{
+    syncHdmiState();
+  }
+});
 
 function play(i){
   if(i<0||i>=items.length)return;
@@ -579,13 +647,13 @@ function play(i){
   clearPhotoTimer();
   setWait(false);
   if(items[i].kind==="photo"){
-    releaseExternalPip(v);
+    exitNativeExternalFullscreen(v);
     v.pause();v.removeAttribute("src");v.load();v.hidden=true;
     audvis.hidden=true;
     ph.src=items[i].url;ph.hidden=false;
     startPhotoMode();
   }else if(items[i].kind==="audio"||items[i].kind==="videoaudio"){
-    releaseExternalPip(v);
+    exitNativeExternalFullscreen(v);
     ph.hidden=true;ph.removeAttribute("src");v.hidden=true;
     var isVA=items[i].kind==="videoaudio";
     audico.textContent=isVA?"🎬🎵":"🎵";
@@ -595,11 +663,11 @@ function play(i){
     v.src=items[i].url;
     var pa=v.play();if(pa&&pa.catch)pa.catch(function(){});
   }else{
-    releaseExternalPip(vout);
+    exitNativeExternalFullscreen(vout);
     ph.hidden=true;ph.removeAttribute("src");audvis.hidden=true;v.hidden=false;pp.disabled=false;
     v.src=items[i].url;
     var p=v.play();
-    if(p&&p.then){p.then(function(){if(hdmiOn)activateExternalPip(v);},function(){});}
+    if(p&&p.then){p.then(function(){if(hdmiOn)enterNativeExternalFullscreen(v);},function(){});}
   }
   now.textContent="In riproduzione: "+items[i].name;
   render();
@@ -687,7 +755,7 @@ function remove(i){
   pushUndo({del:it,index:i});it.gone=true;
   try{URL.revokeObjectURL(it.url);if(it._hdmiVideoUrl)URL.revokeObjectURL(it._hdmiVideoUrl);}catch(e){}
   del(it.id);
-  if(i===cur){clearPhotoTimer();setStagePlaying(false);setWait(false);releaseExternalPip(v);v.pause();v.removeAttribute("src");v.load();ph.hidden=true;ph.removeAttribute("src");audvis.hidden=true;v.hidden=false;pp.disabled=false;pp.textContent="Pausa";cur=-1;now.textContent="Nessun video in riproduzione";tm.textContent="0:00 / 0:00";pf.style.width="0%";if(hdmiOn)sendBlackToHdmi();}
+  if(i===cur){clearPhotoTimer();setStagePlaying(false);setWait(false);exitNativeExternalFullscreen(v);v.pause();v.removeAttribute("src");v.load();ph.hidden=true;ph.removeAttribute("src");audvis.hidden=true;v.hidden=false;pp.disabled=false;pp.textContent="Pausa";cur=-1;now.textContent="Nessun video in riproduzione";tm.textContent="0:00 / 0:00";pf.style.width="0%";if(hdmiOn)sendBlackToHdmi();}
   else if(i<cur)cur--;
   items.splice(i,1);saveOrder(true);render();
 }
@@ -735,7 +803,7 @@ pp.addEventListener("click",function(){
   if(!v.getAttribute("src"))return;
   if(v.paused){var p=v.play();if(p&&p.catch)p.catch(function(){});}else v.pause();
 });
-v.addEventListener("play",function(){if(!(cur>=0&&items[cur]&&items[cur].kind==="photo")){pp.textContent="Pausa";setStagePlaying(true);if(hdmiOn&&items[cur]&&items[cur].kind==="video")activateExternalPip(v);}});
+v.addEventListener("play",function(){if(!(cur>=0&&items[cur]&&items[cur].kind==="photo")){pp.textContent="Pausa";setStagePlaying(true);if(hdmiOn&&items[cur]&&items[cur].kind==="video")enterNativeExternalFullscreen(v);}});
 v.addEventListener("pause",function(){if(!(cur>=0&&items[cur]&&items[cur].kind==="photo")){pp.textContent="Riprendi";setStagePlaying(false);}});
 v.addEventListener("ended",function(){pp.textContent="Pausa";setStagePlaying(false);});
 var psel=document.getElementById("psel"),pedit=document.getElementById("pedit"),pname=document.getElementById("pname"),pdel=document.getElementById("pdel"),pmode="",armed=false;
@@ -744,7 +812,7 @@ function fillProj(){psel.innerHTML="";projs.forEach(function(p){var o=document.c
 function openProject(id){
   clearPhotoTimer();
   setStagePlaying(false);
-  releaseExternalPip(v);
+  exitNativeExternalFullscreen(v);
   items.forEach(function(it){try{if(it.url)URL.revokeObjectURL(it.url);if(it._hdmiVideoUrl)URL.revokeObjectURL(it._hdmiVideoUrl);}catch(e){}});
   items=[];queue=[];cur=-1;setPendingOrder(false);undo=[];updUndo();
   v.pause();v.removeAttribute("src");v.load();ph.hidden=true;ph.removeAttribute("src");audvis.hidden=true;v.hidden=false;pp.disabled=false;pp.textContent="Pausa";now.textContent="Nessun video in riproduzione";tm.textContent="0:00 / 0:00";pf.style.width="0%";setWait(false);
@@ -990,7 +1058,7 @@ if(bgfile)bgfile.addEventListener("change",function(){
   saveBgPhotoDB(f);
 });
 
-// === INVIO DIRETTO SU HDMI (PLAYER ESTERNO NATIVO IOS SENZA CLONAZIONE) ===
+// === GESTIONE PULSANTE INVIASU HDMI ===
 var hdmiBtn=document.getElementById("hdmiout"),hdmit=document.getElementById("hdmit"),vout=document.getElementById("vout");
 var fsBtn=document.getElementById("fsbtn"),fsExit=document.getElementById("fsexit");
 var hdmiOn=false;
@@ -1007,15 +1075,21 @@ function startHdmiOut(){
   hdmiOn=true;
   hdmiBtn.classList.add("on");
   if(hdmit)hdmit.textContent="HDMI: ON";
-  syncHdmiState();
+  if(cur>=0&&items[cur]&&(items[cur].kind||"video")==="video"&&!wait.classList.contains("on")){
+    var ok=enterNativeExternalFullscreen(v);
+    if(!ok)showHdmiBanner("Tocca "Apri su TV" per inviare il video puro al monitor HDMI senza clonare l'iPhone.");
+  }else{
+    syncHdmiState();
+  }
 }
 
 function stopHdmiOut(){
   hdmiOn=false;
   hdmiBtn.classList.remove("on");
   if(hdmit)hdmit.textContent="Invia su HDMI";
-  releaseExternalPip(v);
-  releaseExternalPip(vout);
+  hideHdmiBanner();
+  exitNativeExternalFullscreen(v);
+  exitNativeExternalFullscreen(vout);
   try{vout.pause();vout.removeAttribute("src");vout.load();}catch(e){}
 }
 
