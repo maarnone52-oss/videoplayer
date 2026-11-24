@@ -176,7 +176,7 @@ body.fs-stage #fsexit{display:inline-flex;align-items:center;gap:6px}
 <button class="btn sec" id="und" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span id="undt">Annulla</span></button>
 <button class="btn sec" id="thm" type="button" title="Cambia tema sfondo">Sfondo: Nero</button>
 <label class="btn sec" id="bgpick" title="Scegli foto di sfondo dalla libreria"><input type="file" id="bgfile" accept="image/*" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><path d="M21 15l-5-5L5 21"/></svg><span>Foto sfondo</span></label>
-<button class="btn" id="hdmiout" type="button" title="Invia il solo flusso video 16:9 al monitor HDMI senza clonare l'iPhone"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span id="hdmit">Invia su HDMI</span></button>
+<button class="btn" id="hdmiout" type="button" title="Invia il solo video su monitor HDMI senza clonare l'iPhone"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span id="hdmit">Invia su HDMI</span></button>
 <button class="btn sec" id="ap" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"/><polygon points="12 15 17 21 7 21 12 15" fill="currentColor" stroke="none"/></svg><span>AirPlay</span></button>
 <label class="btn"><input type="file" id="file" accept="video/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Video</span></label>
 <label class="btn"><input type="file" id="filep" accept="image/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Foto</span></label>
@@ -186,7 +186,7 @@ body.fs-stage #fsexit{display:inline-flex;align-items:center;gap:6px}
 <div id="prj"><select id="psel" aria-label="Progetto"></select><button id="pnew" type="button">Nuovo</button><button id="pren" type="button">Rinomina</button><button id="pdel" type="button">Elimina</button></div>
 <div id="pedit" hidden><input id="pname" maxlength="40" placeholder="Nome del progetto"><button id="pok" type="button">OK</button><button id="pno" type="button">Annulla</button></div>
 <div id="imp" hidden><div id="impt"></div><div id="impb"><div id="impf"></div></div></div>
-<video id="vout" playsinline x-webkit-airplay="allow"></video><button id="fsexit" type="button">✕ Esci da schermo intero</button><div id="stage"><video id="v" playsinline></video><img id="ph" alt="" hidden><div id="audvis" hidden><div class="av-ico" id="audico">🎵</div><div class="av-nm" id="audnm"></div><div id="audsub" style="font-size:11px;opacity:.68;margin-top:2px" hidden>Traccia audio estratta da video</div></div><div id="wait"></div></div>
+<video id="vout" playsinline x-webkit-airplay="allow"></video><button id="fsexit" type="button">✕ Esci da schermo intero</button><div id="stage"><video id="v" playsinline x-webkit-airplay="allow"></video><img id="ph" alt="" hidden><div id="audvis" hidden><div class="av-ico" id="audico">🎵</div><div class="av-nm" id="audnm"></div><div id="audsub" style="font-size:11px;opacity:.68;margin-top:2px" hidden>Traccia audio estratta da video</div></div><div id="wait"></div></div>
 <div id="prog" aria-label="Avanzamento"><div id="pf"></div></div>
 <div id="bar"><span id="now">Nessun video in riproduzione</span><span id="tm">0:00 / 0:00</span><button id="mu" type="button" aria-label="Audio">🔊</button></div>
 <div id="ctl"><button id="pp" type="button">Pausa</button><button id="cont" type="button" title="Riproduzione continua senza sosta">Senza sosta: Off</button><button id="pdur" type="button" title="Durata foto">Durata foto: ∞</button><button id="cap" type="button">Scegli miniatura</button><button id="fsbtn" type="button" title="Espandi il quadro di riproduzione a schermo intero" style="border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:9px;padding:0 10px;font-size:12px;font-family:inherit;height:38px;touch-action:manipulation;font-weight:600">⛶ Schermo intero</button><button id="delcur" type="button" aria-label="Elimina selezionato o trascina qui per eliminare" title="Elimina selezionato o trascina qui" disabled>🗑️</button></div>
@@ -424,17 +424,168 @@ function render(){
   });
 }
 
+// === GENERATORE MP4/VIDEO NATIVO PER FOTO E SCHERMO NERO SU HDMI ===
+var cachedBlackBlobUrl="";
+function buildSolidVideoBlobUrl(imgEl,durSec,cb){
+  try{
+    var c=document.createElement("canvas");
+    c.width=1280;c.height=720;
+    var ctx=c.getContext("2d");
+    ctx.fillStyle="#000000";
+    ctx.fillRect(0,0,1280,720);
+    if(imgEl&&imgEl.naturalWidth>0){
+      var sc=Math.min(1280/imgEl.naturalWidth,720/imgEl.naturalHeight);
+      var dw=Math.round(imgEl.naturalWidth*sc),dh=Math.round(imgEl.naturalHeight*sc);
+      ctx.drawImage(imgEl,Math.round((1280-dw)/2),Math.round((720-dh)/2),dw,dh);
+    }
+    var mime="";
+    var candidates=["video/mp4;codecs=avc1.42E01E","video/mp4","video/webm;codecs=vp8","video/webm"];
+    for(var m=0;m<candidates.length;m++){
+      if(window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(candidates[m])){mime=candidates[m];break;}
+    }
+    if(!mime||!c.captureStream){cb("");return;}
+    var stream=c.captureStream(10);
+    var chunks=[];
+    var rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:400000});
+    rec.ondataavailable=function(ev){if(ev.data&&ev.data.size>0)chunks.push(ev.data);};
+    rec.onstop=function(){
+      try{
+        var blob=new Blob(chunks,{type:mime.split(";")[0]});
+        cb(URL.createObjectURL(blob));
+      }catch(e){cb("");}
+    };
+    rec.start();
+    var ticks=0,maxTicks=Math.max(4,Math.round((durSec||1.2)*10));
+    var iv=setInterval(function(){
+      ctx.fillStyle="#000000";
+      ctx.fillRect(0,0,1280,720);
+      if(imgEl&&imgEl.naturalWidth>0){
+        var sc=Math.min(1280/imgEl.naturalWidth,720/imgEl.naturalHeight);
+        var dw=Math.round(imgEl.naturalWidth*sc),dh=Math.round(imgEl.naturalHeight*sc);
+        ctx.drawImage(imgEl,Math.round((1280-dw)/2),Math.round((720-dh)/2),dw,dh);
+      }
+      ticks++;
+      if(ticks>=maxTicks){
+        clearInterval(iv);
+        try{rec.stop();}catch(e){cb("");}
+      }
+    },100);
+  }catch(e){cb("");}
+}
+
+function sendBlackToHdmi(){
+  if(!hdmiOn)return;
+  function applyBlack(bUrl){
+    if(!hdmiOn||!bUrl)return;
+    vout.loop=true;
+    vout.muted=true;
+    vout.srcObject=null;
+    vout.src=bUrl;
+    var p=vout.play();
+    if(p&&p.then)p.then(function(){activateExternalPip(vout);},function(){});
+  }
+  if(cachedBlackBlobUrl){applyBlack(cachedBlackBlobUrl);return;}
+  buildSolidVideoBlobUrl(null,1.0,function(bUrl){
+    if(bUrl)cachedBlackBlobUrl=bUrl;
+    applyBlack(bUrl);
+  });
+}
+
+function sendPhotoToHdmi(it){
+  if(!hdmiOn)return;
+  if(it._hdmiVideoUrl){
+    vout.loop=true;
+    vout.muted=true;
+    vout.srcObject=null;
+    vout.src=it._hdmiVideoUrl;
+    var p=vout.play();
+    if(p&&p.then)p.then(function(){activateExternalPip(vout);},function(){});
+    return;
+  }
+  var im=new Image();
+  im.onload=function(){
+    buildSolidVideoBlobUrl(im,1.2,function(bUrl){
+      if(!bUrl||!hdmiOn)return;
+      it._hdmiVideoUrl=bUrl;
+      vout.loop=true;
+      vout.muted=true;
+      vout.srcObject=null;
+      vout.src=bUrl;
+      var p=vout.play();
+      if(p&&p.then)p.then(function(){activateExternalPip(vout);},function(){});
+    });
+  };
+  im.src=it.url;
+}
+
+function activateExternalPip(videoEl){
+  if(!hdmiOn||!videoEl)return;
+  try{
+    if(videoEl.webkitSupportsPresentationMode&&typeof videoEl.webkitSetPresentationMode==="function"){
+      if(videoEl.webkitPresentationMode!=="picture-in-picture"){
+        videoEl.webkitSetPresentationMode("picture-in-picture");
+      }
+    }else if(document.pictureInPictureEnabled&&!videoEl.disablePictureInPicture&&document.pictureInPictureElement!==videoEl){
+      videoEl.requestPictureInPicture().catch(function(){});
+    }
+  }catch(e){}
+}
+
+function releaseExternalPip(videoEl){
+  try{
+    if(videoEl&&videoEl.webkitSupportsPresentationMode&&typeof videoEl.webkitSetPresentationMode==="function"){
+      if(videoEl.webkitPresentationMode==="picture-in-picture"){
+        videoEl.webkitSetPresentationMode("inline");
+      }
+    }else if(document.pictureInPictureElement===videoEl){
+      document.exitPictureInPicture().catch(function(){});
+    }
+  }catch(e){}
+}
+
+function syncHdmiState(){
+  if(!hdmiOn)return;
+  var isWaiting=wait.classList.contains("on");
+  if(isWaiting||cur<0||!items[cur]){
+    releaseExternalPip(v);
+    sendBlackToHdmi();
+    return;
+  }
+  var it=items[cur];
+  var kind=it.kind||"video";
+  if(kind==="video"){
+    releaseExternalPip(vout);
+    vout.pause();
+    if(v.readyState>=1){
+      activateExternalPip(v);
+    }else{
+      v.addEventListener("loadedmetadata",function onMeta(){
+        v.removeEventListener("loadedmetadata",onMeta);
+        activateExternalPip(v);
+      });
+    }
+  }else if(kind==="photo"){
+    releaseExternalPip(v);
+    sendPhotoToHdmi(it);
+  }else{
+    releaseExternalPip(v);
+    sendBlackToHdmi();
+  }
+}
+
 function play(i){
   if(i<0||i>=items.length)return;
   cur=i;
   clearPhotoTimer();
   setWait(false);
   if(items[i].kind==="photo"){
+    releaseExternalPip(v);
     v.pause();v.removeAttribute("src");v.load();v.hidden=true;
     audvis.hidden=true;
     ph.src=items[i].url;ph.hidden=false;
     startPhotoMode();
   }else if(items[i].kind==="audio"||items[i].kind==="videoaudio"){
+    releaseExternalPip(v);
     ph.hidden=true;ph.removeAttribute("src");v.hidden=true;
     var isVA=items[i].kind==="videoaudio";
     audico.textContent=isVA?"🎬🎵":"🎵";
@@ -444,12 +595,15 @@ function play(i){
     v.src=items[i].url;
     var pa=v.play();if(pa&&pa.catch)pa.catch(function(){});
   }else{
+    releaseExternalPip(vout);
     ph.hidden=true;ph.removeAttribute("src");audvis.hidden=true;v.hidden=false;pp.disabled=false;
     v.src=items[i].url;
-    var p=v.play();if(p&&p.catch)p.catch(function(){});
+    var p=v.play();
+    if(p&&p.then){p.then(function(){if(hdmiOn)activateExternalPip(v);},function(){});}
   }
   now.textContent="In riproduzione: "+items[i].name;
   render();
+  syncHdmiState();
   var on=list.querySelector(".tile.on");if(on&&on.scrollIntoView)on.scrollIntoView({block:"nearest",behavior:"smooth"});
 }
 function fmt(s){if(!isFinite(s))s=0;var m=Math.floor(s/60),x=Math.floor(s%60);return m+":"+(x<10?"0":"")+x;}
@@ -464,7 +618,10 @@ function updateGo(){
 function setWait(on){
   wait.classList.toggle("on",on);
   document.body.classList.toggle("waiting",on);
-  if(on)setStagePlaying(false);
+  if(on){
+    setStagePlaying(false);
+    if(hdmiOn)syncHdmiState();
+  }
 }
 v.addEventListener("ended",function(){setStagePlaying(false);if(continuous&&cur+1<items.length){play(cur+1);}else{setWait(true);}});
 v.addEventListener("timeupdate",function(){
@@ -528,9 +685,9 @@ function remove(i){
   if(i<0||i>=items.length)return;
   var it=items[i];
   pushUndo({del:it,index:i});it.gone=true;
-  try{URL.revokeObjectURL(it.url);}catch(e){}
+  try{URL.revokeObjectURL(it.url);if(it._hdmiVideoUrl)URL.revokeObjectURL(it._hdmiVideoUrl);}catch(e){}
   del(it.id);
-  if(i===cur){clearPhotoTimer();setStagePlaying(false);setWait(false);v.pause();v.removeAttribute("src");v.load();ph.hidden=true;ph.removeAttribute("src");audvis.hidden=true;v.hidden=false;pp.disabled=false;pp.textContent="Pausa";cur=-1;now.textContent="Nessun video in riproduzione";tm.textContent="0:00 / 0:00";pf.style.width="0%";}
+  if(i===cur){clearPhotoTimer();setStagePlaying(false);setWait(false);releaseExternalPip(v);v.pause();v.removeAttribute("src");v.load();ph.hidden=true;ph.removeAttribute("src");audvis.hidden=true;v.hidden=false;pp.disabled=false;pp.textContent="Pausa";cur=-1;now.textContent="Nessun video in riproduzione";tm.textContent="0:00 / 0:00";pf.style.width="0%";if(hdmiOn)sendBlackToHdmi();}
   else if(i<cur)cur--;
   items.splice(i,1);saveOrder(true);render();
 }
@@ -578,7 +735,7 @@ pp.addEventListener("click",function(){
   if(!v.getAttribute("src"))return;
   if(v.paused){var p=v.play();if(p&&p.catch)p.catch(function(){});}else v.pause();
 });
-v.addEventListener("play",function(){if(!(cur>=0&&items[cur]&&items[cur].kind==="photo")){pp.textContent="Pausa";setStagePlaying(true);}});
+v.addEventListener("play",function(){if(!(cur>=0&&items[cur]&&items[cur].kind==="photo")){pp.textContent="Pausa";setStagePlaying(true);if(hdmiOn&&items[cur]&&items[cur].kind==="video")activateExternalPip(v);}});
 v.addEventListener("pause",function(){if(!(cur>=0&&items[cur]&&items[cur].kind==="photo")){pp.textContent="Riprendi";setStagePlaying(false);}});
 v.addEventListener("ended",function(){pp.textContent="Pausa";setStagePlaying(false);});
 var psel=document.getElementById("psel"),pedit=document.getElementById("pedit"),pname=document.getElementById("pname"),pdel=document.getElementById("pdel"),pmode="",armed=false;
@@ -587,10 +744,12 @@ function fillProj(){psel.innerHTML="";projs.forEach(function(p){var o=document.c
 function openProject(id){
   clearPhotoTimer();
   setStagePlaying(false);
-  items.forEach(function(it){try{if(it.url)URL.revokeObjectURL(it.url);}catch(e){}});
+  releaseExternalPip(v);
+  items.forEach(function(it){try{if(it.url)URL.revokeObjectURL(it.url);if(it._hdmiVideoUrl)URL.revokeObjectURL(it._hdmiVideoUrl);}catch(e){}});
   items=[];queue=[];cur=-1;setPendingOrder(false);undo=[];updUndo();
   v.pause();v.removeAttribute("src");v.load();ph.hidden=true;ph.removeAttribute("src");audvis.hidden=true;v.hidden=false;pp.disabled=false;pp.textContent="Pausa";now.textContent="Nessun video in riproduzione";tm.textContent="0:00 / 0:00";pf.style.width="0%";setWait(false);
   pid=id;saveProj();fillProj();render();loadAll();
+  if(hdmiOn)sendBlackToHdmi();
 }
 function askName(mode,txt){pmode=mode;pname.value=txt;pedit.hidden=false;pname.focus();}
 psel.addEventListener("change",function(){openProject(psel.value);});
@@ -831,10 +990,10 @@ if(bgfile)bgfile.addEventListener("change",function(){
   saveBgPhotoDB(f);
 });
 
-// === INVIO DIRETTO 1-TOCCO SU HDMI / SCHERMO ESTERNO SENZA CLONARE IPHONE ===
+// === INVIO DIRETTO SU HDMI (PLAYER ESTERNO NATIVO IOS SENZA CLONAZIONE) ===
 var hdmiBtn=document.getElementById("hdmiout"),hdmit=document.getElementById("hdmit"),vout=document.getElementById("vout");
 var fsBtn=document.getElementById("fsbtn"),fsExit=document.getElementById("fsexit");
-var hdmiOn=false,regiaCanvas=null,regiaCtx=null,regiaRaf=null,regiaStream=null,silentAudioCtx=null;
+var hdmiOn=false;
 
 function toggleStageFs(force){
   var next=(typeof force==="boolean")?force:!document.body.classList.contains("fs-stage");
@@ -844,94 +1003,20 @@ if(fsBtn)fsBtn.addEventListener("click",function(){toggleStageFs(true);});
 if(fsExit)fsExit.addEventListener("click",function(){toggleStageFs(false);});
 stage.addEventListener("dblclick",function(){toggleStageFs();});
 
-function drawContain(ctx,srcEl,sw,sh,cw,ch){
-  if(!sw||!sh)return;
-  var scale=Math.min(cw/sw,ch/sh);
-  var dw=Math.round(sw*scale),dh=Math.round(sh*scale);
-  var dx=Math.round((cw-dw)/2),dy=Math.round((ch-dh)/2);
-  ctx.drawImage(srcEl,dx,dy,dw,dh);
-}
-
-function renderRegiaFrame(){
-  if(!hdmiOn||!regiaCtx)return;
-  var cw=regiaCanvas.width,ch=regiaCanvas.height;
-  regiaCtx.fillStyle="#000000";
-  regiaCtx.fillRect(0,0,cw,ch);
-  var isWaiting=wait.classList.contains("on");
-  if(!isWaiting&&cur>=0&&items[cur]){
-    var kind=items[cur].kind||"video";
-    if(kind==="video"&&!v.hidden&&v.readyState>=2&&v.videoWidth>0){
-      drawContain(regiaCtx,v,v.videoWidth,v.videoHeight,cw,ch);
-    }else if(kind==="photo"&&!ph.hidden&&ph.complete&&ph.naturalWidth>0){
-      drawContain(regiaCtx,ph,ph.naturalWidth,ph.naturalHeight,cw,ch);
-    }
-  }
-  regiaRaf=requestAnimationFrame(renderRegiaFrame);
-}
-
-function attachSilentAudioTrack(stream){
-  try{
-    var AC=window.AudioContext||window.webkitAudioContext;
-    if(!AC)return;
-    if(!silentAudioCtx)silentAudioCtx=new AC();
-    if(silentAudioCtx.state==="suspended")silentAudioCtx.resume();
-    var osc=silentAudioCtx.createOscillator();
-    var gain=silentAudioCtx.createGain();
-    gain.gain.value=0.0001;
-    var dst=silentAudioCtx.createMediaStreamDestination();
-    osc.connect(gain);
-    gain.connect(dst);
-    osc.start();
-    var tracks=dst.stream.getAudioTracks();
-    if(tracks&&tracks[0])stream.addTrack(tracks[0]);
-  }catch(e){}
-}
-
 function startHdmiOut(){
-  try{
-    if(!regiaCanvas){
-      regiaCanvas=document.createElement("canvas");
-      regiaCanvas.width=1280;
-      regiaCanvas.height=720;
-      regiaCtx=regiaCanvas.getContext("2d",{alpha:false});
-    }
-    hdmiOn=true;
-    hdmiBtn.classList.add("on");
-    if(hdmit)hdmit.textContent="HDMI: ON";
-    renderRegiaFrame();
-    if(!regiaStream&&regiaCanvas.captureStream){
-      regiaStream=regiaCanvas.captureStream(30);
-      attachSilentAudioTrack(regiaStream);
-    }
-    if(regiaStream){
-      vout.disableRemotePlayback=false;
-      vout.muted=false;
-      vout.srcObject=regiaStream;
-      var p=vout.play();
-      if(p&&p.catch)p.catch(function(){});
-      if(vout.webkitShowPlaybackTargetPicker){
-        try{vout.webkitShowPlaybackTargetPicker();}catch(e){}
-      }else if(vout.webkitSupportsPresentationMode&&typeof vout.webkitSetPresentationMode==="function"){
-        try{vout.webkitSetPresentationMode("picture-in-picture");}catch(e){}
-      }
-    }
-  }catch(e){
-    stopHdmiOut();
-  }
+  hdmiOn=true;
+  hdmiBtn.classList.add("on");
+  if(hdmit)hdmit.textContent="HDMI: ON";
+  syncHdmiState();
 }
 
 function stopHdmiOut(){
   hdmiOn=false;
-  if(regiaRaf){cancelAnimationFrame(regiaRaf);regiaRaf=null;}
   hdmiBtn.classList.remove("on");
   if(hdmit)hdmit.textContent="Invia su HDMI";
-  try{
-    if(vout.webkitPresentationMode==="picture-in-picture"&&vout.webkitSetPresentationMode){
-      vout.webkitSetPresentationMode("inline");
-    }
-    vout.pause();
-    vout.srcObject=null;
-  }catch(e){}
+  releaseExternalPip(v);
+  releaseExternalPip(vout);
+  try{vout.pause();vout.removeAttribute("src");vout.load();}catch(e){}
 }
 
 if(hdmiBtn)hdmiBtn.addEventListener("click",function(){
