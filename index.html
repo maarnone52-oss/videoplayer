@@ -23,7 +23,6 @@ input,select,textarea{-webkit-user-select:text!important;user-select:text!import
 html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none}
 body{margin:0;padding-top:var(--sat);padding-bottom:var(--sab);background:var(--bg);color:var(--fg);font:15px/1.3 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
-/* Barra superiore ridisegnata con pulsanti vettoriali nitidi ad alta definizione */
 header{position:relative;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px 6px;touch-action:none}
 .brand{display:inline-flex;align-items:center;gap:8px;flex:1;min-width:110px;margin:0;padding:0;height:32px;color:var(--fg);text-decoration:none}
 .brand-mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--acc) 0%,#1d4ed8 100%);display:inline-flex;align-items:center;justify-content:center;flex:none;box-shadow:0 1px 3px rgba(0,0,0,.2)}
@@ -112,16 +111,13 @@ body.dragging #delcur.hot{background:var(--del);border-color:var(--del);color:#f
 .nm{padding:5px 7px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .hint{grid-column:1/-1;color:var(--mut);text-align:center;padding:24px 10px}
 
-#regia.on{background:#16a34a;color:#fff;border-color:#16a34a;box-shadow:0 0 0 2px rgba(22,163,74,.35)}
+#hdmiout{background:#2563eb;color:#fff;border:0}
+#hdmiout.on{background:#16a34a;color:#fff;box-shadow:0 0 0 2px rgba(22,163,74,.4)}
 body.fs-stage #stage{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-height:none!important;margin:0!important;border-radius:0!important;border:0!important;z-index:999!important;background:#000!important}
 #fsexit{display:none;position:fixed;top:max(env(safe-area-inset-top,0px),14px);right:14px;z-index:1005;background:rgba(20,20,24,.72);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:7px 14px;font-size:13px;font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer;touch-action:manipulation}
 body.fs-stage #fsexit{display:inline-flex;align-items:center;gap:6px}
-#vout{position:fixed;right:8px;top:max(env(safe-area-inset-top,0px),44px);width:112px;height:63px;background:#000;border:2px solid #16a34a;border-radius:8px;z-index:90;box-shadow:0 4px 14px rgba(0,0,0,.55);pointer-events:auto;display:none}
-#vout.on{display:block}
-#regiaap,#regiapip{display:none}
-#regiaap.on,#regiapip.on{display:inline-flex}
+#vout{position:fixed;left:-9999px;top:0;width:320px;height:180px;opacity:0.01;pointer-events:none}
 
-/* Adattamento nativo a due colonne in orientamento orizzontale (landscape) con finestra video 16:9 bilanciata */
 @media screen and (orientation:landscape) and (max-height:600px){
   body{
     display:grid;
@@ -170,7 +166,6 @@ body.fs-stage #fsexit{display:inline-flex;align-items:center;gap:6px}
   #go{width:72px;height:72px;font-size:13.5px;border-radius:50%}
   #go .go-sub{font-size:11px;margin-top:2px}
 }
-
 </style>
 </head>
 <body>
@@ -181,9 +176,7 @@ body.fs-stage #fsexit{display:inline-flex;align-items:center;gap:6px}
 <button class="btn sec" id="und" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span id="undt">Annulla</span></button>
 <button class="btn sec" id="thm" type="button" title="Cambia tema sfondo">Sfondo: Nero</button>
 <label class="btn sec" id="bgpick" title="Scegli foto di sfondo dalla libreria"><input type="file" id="bgfile" accept="image/*" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><path d="M21 15l-5-5L5 21"/></svg><span>Foto sfondo</span></label>
-<button class="btn sec" id="regia" type="button" title="Attiva flusso Regia 16:9 mantenendo i controlli su iPhone"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span id="regiat">Uscita Regia</span></button>
-<button class="btn" id="regiaap" type="button" title="Invia il solo flusso 16:9 al monitor esterno/AirPlay lasciando tutta l'app su iPhone"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"/><polygon points="12 15 17 21 7 21 12 15" fill="currentColor" stroke="none"/></svg><span>Invia a Schermo</span></button>
-<button class="btn sec" id="regiapip" type="button" title="Attiva/Disattiva finestra Picture-in-Picture lasciando i controlli su iPhone"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="11" y="11" width="9" height="7" rx="1" fill="currentColor" stroke="none"/></svg><span>PiP</span></button>
+<button class="btn" id="hdmiout" type="button" title="Invia il solo flusso video 16:9 al monitor HDMI senza clonare l'iPhone"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span id="hdmit">Invia su HDMI</span></button>
 <button class="btn sec" id="ap" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"/><polygon points="12 15 17 21 7 21 12 15" fill="currentColor" stroke="none"/></svg><span>AirPlay</span></button>
 <label class="btn"><input type="file" id="file" accept="video/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Video</span></label>
 <label class="btn"><input type="file" id="filep" accept="image/*" multiple hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Foto</span></label>
@@ -193,7 +186,7 @@ body.fs-stage #fsexit{display:inline-flex;align-items:center;gap:6px}
 <div id="prj"><select id="psel" aria-label="Progetto"></select><button id="pnew" type="button">Nuovo</button><button id="pren" type="button">Rinomina</button><button id="pdel" type="button">Elimina</button></div>
 <div id="pedit" hidden><input id="pname" maxlength="40" placeholder="Nome del progetto"><button id="pok" type="button">OK</button><button id="pno" type="button">Annulla</button></div>
 <div id="imp" hidden><div id="impt"></div><div id="impb"><div id="impf"></div></div></div>
-<video id="vout" playsinline muted x-webkit-airplay="allow"></video><button id="fsexit" type="button">✕ Esci da schermo intero</button><div id="stage"><video id="v" playsinline></video><img id="ph" alt="" hidden><div id="audvis" hidden><div class="av-ico" id="audico">🎵</div><div class="av-nm" id="audnm"></div><div id="audsub" style="font-size:11px;opacity:.68;margin-top:2px" hidden>Traccia audio estratta da video</div></div><div id="wait"></div></div>
+<video id="vout" playsinline x-webkit-airplay="allow"></video><button id="fsexit" type="button">✕ Esci da schermo intero</button><div id="stage"><video id="v" playsinline></video><img id="ph" alt="" hidden><div id="audvis" hidden><div class="av-ico" id="audico">🎵</div><div class="av-nm" id="audnm"></div><div id="audsub" style="font-size:11px;opacity:.68;margin-top:2px" hidden>Traccia audio estratta da video</div></div><div id="wait"></div></div>
 <div id="prog" aria-label="Avanzamento"><div id="pf"></div></div>
 <div id="bar"><span id="now">Nessun video in riproduzione</span><span id="tm">0:00 / 0:00</span><button id="mu" type="button" aria-label="Audio">🔊</button></div>
 <div id="ctl"><button id="pp" type="button">Pausa</button><button id="cont" type="button" title="Riproduzione continua senza sosta">Senza sosta: Off</button><button id="pdur" type="button" title="Durata foto">Durata foto: ∞</button><button id="cap" type="button">Scegli miniatura</button><button id="fsbtn" type="button" title="Espandi il quadro di riproduzione a schermo intero" style="border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:9px;padding:0 10px;font-size:12px;font-family:inherit;height:38px;touch-action:manipulation;font-weight:600">⛶ Schermo intero</button><button id="delcur" type="button" aria-label="Elimina selezionato o trascina qui per eliminare" title="Elimina selezionato o trascina qui" disabled>🗑️</button></div>
@@ -207,7 +200,6 @@ body.fs-stage #fsexit{display:inline-flex;align-items:center;gap:6px}
 
 <script>
 (function(){
-// Blocca zoom pagina del browser (pinch-to-zoom, doppio tap, gesti Safari/iOS, Ctrl+rotella) e menu contestuale
 document.addEventListener("gesturestart",function(e){e.preventDefault();},{passive:false});
 document.addEventListener("gesturechange",function(e){e.preventDefault();},{passive:false});
 document.addEventListener("gestureend",function(e){e.preventDefault();},{passive:false});
@@ -839,11 +831,10 @@ if(bgfile)bgfile.addEventListener("change",function(){
   saveBgPhotoDB(f);
 });
 
-// === USCITA REGIA DEDICATA (CONTROLLI COMPLETI SU IPHONE + FLUSSO 16:9 SU SCHERMO ESTERNO) ===
-var regiaBtn=document.getElementById("regia"),regiat=document.getElementById("regiat"),vout=document.getElementById("vout");
-var regiaApBtn=document.getElementById("regiaap"),regiaPipBtn=document.getElementById("regiapip");
+// === INVIO DIRETTO 1-TOCCO SU HDMI / SCHERMO ESTERNO SENZA CLONARE IPHONE ===
+var hdmiBtn=document.getElementById("hdmiout"),hdmit=document.getElementById("hdmit"),vout=document.getElementById("vout");
 var fsBtn=document.getElementById("fsbtn"),fsExit=document.getElementById("fsexit");
-var regiaOn=false,regiaCanvas=null,regiaCtx=null,regiaRaf=null,regiaStream=null;
+var hdmiOn=false,regiaCanvas=null,regiaCtx=null,regiaRaf=null,regiaStream=null,silentAudioCtx=null;
 
 function toggleStageFs(force){
   var next=(typeof force==="boolean")?force:!document.body.classList.contains("fs-stage");
@@ -862,7 +853,7 @@ function drawContain(ctx,srcEl,sw,sh,cw,ch){
 }
 
 function renderRegiaFrame(){
-  if(!regiaOn||!regiaCtx)return;
+  if(!hdmiOn||!regiaCtx)return;
   var cw=regiaCanvas.width,ch=regiaCanvas.height;
   regiaCtx.fillStyle="#000000";
   regiaCtx.fillRect(0,0,cw,ch);
@@ -874,40 +865,29 @@ function renderRegiaFrame(){
     }else if(kind==="photo"&&!ph.hidden&&ph.complete&&ph.naturalWidth>0){
       drawContain(regiaCtx,ph,ph.naturalWidth,ph.naturalHeight,cw,ch);
     }
-    // Per audio / videoaudio / attesa (#wait), lo schermo esterno resta su nero pulito (#000000)
   }
   regiaRaf=requestAnimationFrame(renderRegiaFrame);
 }
 
-function toggleRegiaPiP(forcePiP){
-  if(!vout)return;
+function attachSilentAudioTrack(stream){
   try{
-    if(vout.webkitSupportsPresentationMode&&typeof vout.webkitSetPresentationMode==="function"){
-      var isPiP=vout.webkitPresentationMode==="picture-in-picture";
-      var target=(typeof forcePiP==="boolean")?(forcePiP?"picture-in-picture":"inline"):(isPiP?"inline":"picture-in-picture");
-      if(vout.webkitPresentationMode!==target)vout.webkitSetPresentationMode(target);
-      return;
-    }
-    if(document.pictureInPictureElement===vout&&forcePiP!==true&&document.exitPictureInPicture){
-      document.exitPictureInPicture().catch(function(){});
-      return;
-    }
-    if(document.pictureInPictureEnabled&&vout.requestPictureInPicture&&forcePiP!==false){
-      vout.requestPictureInPicture().catch(function(){});
-    }
+    var AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return;
+    if(!silentAudioCtx)silentAudioCtx=new AC();
+    if(silentAudioCtx.state==="suspended")silentAudioCtx.resume();
+    var osc=silentAudioCtx.createOscillator();
+    var gain=silentAudioCtx.createGain();
+    gain.gain.value=0.0001;
+    var dst=silentAudioCtx.createMediaStreamDestination();
+    osc.connect(gain);
+    gain.connect(dst);
+    osc.start();
+    var tracks=dst.stream.getAudioTracks();
+    if(tracks&&tracks[0])stream.addTrack(tracks[0]);
   }catch(e){}
 }
 
-function openExternalTargetPicker(){
-  if(!vout)return;
-  try{
-    if(vout.webkitShowPlaybackTargetPicker){
-      vout.webkitShowPlaybackTargetPicker();
-    }
-  }catch(e){}
-}
-
-function startRegiaOut(){
+function startHdmiOut(){
   try{
     if(!regiaCanvas){
       regiaCanvas=document.createElement("canvas");
@@ -915,60 +895,48 @@ function startRegiaOut(){
       regiaCanvas.height=720;
       regiaCtx=regiaCanvas.getContext("2d",{alpha:false});
     }
-    regiaOn=true;
-    regiaBtn.classList.add("on");
-    vout.classList.add("on");
-    if(regiaApBtn)regiaApBtn.classList.add("on");
-    if(regiaPipBtn)regiaPipBtn.classList.add("on");
-    if(regiat)regiat.textContent="Regia: ON";
+    hdmiOn=true;
+    hdmiBtn.classList.add("on");
+    if(hdmit)hdmit.textContent="HDMI: ON";
     renderRegiaFrame();
     if(!regiaStream&&regiaCanvas.captureStream){
       regiaStream=regiaCanvas.captureStream(30);
+      attachSilentAudioTrack(regiaStream);
     }
     if(regiaStream){
       vout.disableRemotePlayback=false;
+      vout.muted=false;
       vout.srcObject=regiaStream;
       var p=vout.play();
       if(p&&p.catch)p.catch(function(){});
-      // Attiva Picture-in-Picture senza mai oscurare l'interfaccia dell'app su iPhone
-      setTimeout(function(){
-        if(regiaOn)toggleRegiaPiP(true);
-      },120);
+      if(vout.webkitShowPlaybackTargetPicker){
+        try{vout.webkitShowPlaybackTargetPicker();}catch(e){}
+      }else if(vout.webkitSupportsPresentationMode&&typeof vout.webkitSetPresentationMode==="function"){
+        try{vout.webkitSetPresentationMode("picture-in-picture");}catch(e){}
+      }
     }
   }catch(e){
-    stopRegiaOut();
+    stopHdmiOut();
   }
 }
 
-function stopRegiaOut(){
-  regiaOn=false;
+function stopHdmiOut(){
+  hdmiOn=false;
   if(regiaRaf){cancelAnimationFrame(regiaRaf);regiaRaf=null;}
-  regiaBtn.classList.remove("on");
-  vout.classList.remove("on");
-  if(regiaApBtn)regiaApBtn.classList.remove("on");
-  if(regiaPipBtn)regiaPipBtn.classList.remove("on");
-  if(regiat)regiat.textContent="Uscita Regia";
+  hdmiBtn.classList.remove("on");
+  if(hdmit)hdmit.textContent="Invia su HDMI";
   try{
-    toggleRegiaPiP(false);
+    if(vout.webkitPresentationMode==="picture-in-picture"&&vout.webkitSetPresentationMode){
+      vout.webkitSetPresentationMode("inline");
+    }
     vout.pause();
     vout.srcObject=null;
   }catch(e){}
 }
 
-if(regiaBtn)regiaBtn.addEventListener("click",function(){
-  if(regiaOn)stopRegiaOut();
-  else startRegiaOut();
-});
-if(regiaApBtn)regiaApBtn.addEventListener("click",function(){
-  if(!regiaOn)startRegiaOut();
-  openExternalTargetPicker();
-});
-if(regiaPipBtn)regiaPipBtn.addEventListener("click",function(){
-  if(!regiaOn)startRegiaOut();
-  else toggleRegiaPiP();
-});
-vout.addEventListener("click",function(){
-  openExternalTargetPicker();
+if(hdmiBtn)hdmiBtn.addEventListener("click",function(){
+  if(hdmiOn)stopHdmiOut();
+  else startHdmiOut();
 });
 
 fillProj();openDB(function(){loadBgPhotoDB();loadAll();});
